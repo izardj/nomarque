@@ -48,3 +48,32 @@ Validation : un joueur se connecte par lien magique et rejoint un monde.
 
 - Lecture complète des documents de conception, des CSV et des maquettes (Opus).
 - Plan du jalon J0 ci-dessus.
+- Squelette Nx (DeepSeek) accepté. Complété par Opus : lint de pureté de `libs/rules` (`Date`, `Math.random`, `process`, `fetch`, minuteurs interdits), types Node retirés des libs partagées.
+- Contrat de `libs/data` et table libellés → identifiants (Opus). Import CSV → TypeScript validé par Zod (DeepSeek) accepté ; Opus a étendu la validation croisée à tous les bâtiments (le temple consomme du pain) et ajouté `check-data` à la CI.
+- Schéma Prisma et migration initiale (Opus). Prisma fixé en 7.10.1 : le tag `latest` de npm pointe sur une release candidate 8.0.
+- Auth par lien magique (Opus) : jeton et session stockés hachés, consommation atomique du lien, quota par adresse sans révéler son existence, limite par IP, cookie httpOnly SameSite=Lax. 13 tests d'intégration.
+- CI GitHub Actions (DeepSeek) acceptée telle quelle.
+- Docker Compose et images (DeepSeek) acceptés avec deux corrections d'Opus : nginx retirait le préfixe `/api` (toutes les routes auraient répondu 404), et les ports étaient ouverts sur toutes les interfaces alors que l'API fait confiance à `X-Forwarded-For`.
+- Module `worlds` (Sonnet) accepté sans retouche : 16 tests d'intégration, dont deux `join` simultanés.
+
+#### Décisions
+
+- Le jeton de lien magique porte l'e-mail ; le compte joueur n'est créé qu'à la vérification (pas de comptes fantômes).
+- Le front vérifie le lien par un `POST /auth/verify` depuis la page `/login/verify`, et non par un `GET` sur l'API : les antivirus de messagerie qui suivent les liens ne consomment pas le jeton.
+- Protection CSRF : cookie SameSite=Lax et API servie sur la même origine que le front (proxy). Pas de CORS.
+- `Reign.dataVersion` plutôt que `World.dataVersion` : la spec dit que le monde enregistre la version « avec laquelle le règne a démarré », ce qui est une propriété du règne.
+- Prix du marché et des contrats en centièmes de deben (entiers) ; stocks et deben du nome en flottants pour `advance`. À revoir en J3 avec le moteur de marché.
+- `Nome.rulesState` (JSON) porte les accumulateurs propres à `libs/rules` (compteurs des besoins, occupation moyenne en Peret, effets actifs), pour ne pas figer leur forme en base avant J1.
+- TypeScript 6 : `rootDir` vaut désormais par défaut le dossier du tsconfig ; les apps serveur le fixent à la racine du dépôt.
+- `REIGN_YEARS = 4` vit dans `libs/rules` faute de colonne dans `parametres.csv`.
+- Rejoindre un monde crée un nome sans parcelle et avec 0 deben : la cité de départ attend les données manquantes (voir questions).
+
+#### Questions ouvertes pour J1 (données d'équilibrage)
+
+1. Zone « Rive » (fosse d'argile, potier) absente de la DA : rattachée provisoirement au fleuve.
+2. Capacité des greniers et stockage de base sans grenier : absents.
+3. Îlots de maisons : coût, durée de construction et nombre de maisons par parcelle absents (la maquette montre « Huttes ×3 »).
+4. Stocks et deben de départ, plan des parcelles (nombre, zones) par région : absents.
+5. Haute-Égypte : aucune ressource ne lui est rattachée, et l'effet chiffré d'une région n'est défini nulle part.
+6. Rouleaux : il faut des scribes pour en produire, et des maisons de niveau 3 (qui en consomment) pour avoir des scribes. Seuls les greniers royaux (J3) cassent la boucle.
+7. Villa : aucun besoin en ressources dans `besoins_maisons.csv` (hors MVP, à compléter plus tard).
