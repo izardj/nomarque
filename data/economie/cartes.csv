@@ -1,0 +1,31 @@
+id,titre,declencheur,phase,dieu,texte,choix_a,effet_a,choix_b,effet_b,choix_c,effet_c,defaut
+C01,Le chat sacré,Tutoriel (mission 3),Toutes,Bastet,Un chat sacré dort sur le toit du grenier. Les ouvriers n'osent plus entrer.,Attendre qu'il se réveille,grenier inaccessible 6 h,L'honorer d'un poisson,poisson -5 ; Bastet +10,,,A
+C02,Le scribe indélicat,Stock de blé > 200,Toutes,Thot,Les comptes du grenier ne tombent pas juste. Un scribe aurait « égaré » du grain.,Le renvoyer,scribes -1 ; blé +30,Fermer les yeux,blé -30 ; Thot -5,Lui faire tout recompter,scribes inactifs 12 h ; blé +15,B
+C03,Rongeurs au grenier,Faveur de Bastet basse,Toutes,Bastet,Des rats ont trouvé le chemin du grenier.,Faire venir des chats,deben -30 ; Bastet +5,Laisser faire,blé -10 %,,,B
+C04,Fièvre chez les huttes,Faveur de Sekhmet basse,Toutes,Sekhmet,Plusieurs familles du quartier des huttes sont prises de fièvre.,Offrande à Sekhmet,pain -20 ; Sekhmet +10,Isoler le quartier,paysans -20 % pendant 24 h,,,B
+C05,Les criquets,Aléatoire,Peret,Osiris,Un nuage de criquets s'approche des champs.,Enfumer les champs,ouvriers des champs -50 % 12 h ; récolte protégée,Prier Osiris,Osiris -10 ; 50 % : récolte -15 %,Ne rien faire,récolte -20 %,C
+C06,Sécheresse partielle,Crue basse,Peret,Hâpy,Les canaux baissent plus vite que prévu.,Corvée d'irrigation,paysans -30 % 24 h ; récolte +10 %,Accepter,récolte -10 %,,,B
+C07,La fête d'Opet,Une fois par année,Peret,,Thèbes célèbre Opet. Ton peuple réclame de la bière.,Fournir 40 bières,bière -40 ; maisons : montée de niveau accélérée 24 h,Fournir 15 bières,bière -15,Ignorer la fête,faveur -5 ; Bastet -5,C
+C08,Une caravane nubienne,Aléatoire,Peret,,Des marchands nubiens campent aux portes pour quelques heures.,Acheter de l'or,deben -150 ; or +10,Leur vendre du pain,pain -30 ; deben +100,Les ignorer,rien,C
+C09,Crue basse annoncée,Crue basse,Akhet,Hâpy,Le Nilomètre annonce une crue basse. Le peuple s'inquiète.,Rationner le grain,conso de blé -20 % 48 h ; montée de niveau bloquée 48 h,Ouvrir les greniers,blé -50 ; Hâpy +5,,,B
+C10,Les digues cèdent,Crue haute,Akhet,Hâpy,L'eau monte au-dessus des digues.,Renforcer les digues,briques -30 ; paysans -30 % 12 h,Évacuer les berges,parcelles de rive inactives 24 h,,,B
+C11,Corvée royale,Début d'Akhet,Akhet,,Le vizir réclame des bras pour le monument.,Envoyer 10 paysans,paysans -10 pendant 48 h ; faveur +20,Envoyer 5 paysans,paysans -5 pendant 48 h ; faveur +8,Refuser poliment,faveur -5,C
+C12,Belle récolte,Crue bonne,Shemu,Osiris,Les épis sont lourds cette année.,Remercier Osiris,blé -20 ; Osiris +15,Tout garder,rien,,,B
+C13,Le percepteur zélé,Avant le tribut,Shemu,,Le percepteur royal veut compter tes greniers lui-même.,L'accueillir avec de la bière,bière -10 ; tribut -10 %,Le laisser compter,tribut +5 %,Le soudoyer,deben -40 ; tribut -20 % ; 25 % : faveur -15,B
+C14,Un hippopotame,Champ d'orge construit,Toutes,,Un hippopotame a élu domicile dans le champ d'orge.,Organiser une chasse,paysans -4 pendant 6 h ; deben +20,Le laisser brouter,orge -15,,,B
+C15,Le potier inventif,Potier construit,Toutes,Thot,Ton potier a inventé un tour plus rapide.,Financer l'atelier,deben -60 ; poterie +20 % jusqu'à la fin de l'année,Le féliciter,Thot +5,,,B
+C16,Querelle de voisins,3 maisons ou plus,Toutes,,Deux familles se disputent une parcelle.,Trancher pour l'aînée,une maison : montée de niveau bloquée 24 h,Partager la parcelle,deben -10,,,B
+C17,Le grand prêtre ambitieux,Temple construit,Toutes,,Le grand prêtre réclame un temple plus grand.,Accepter,deben -100 ; tous les dieux +5,Refuser,dieu du temple -10,,,B
+C18,Un capitaine de Byblos,Port construit,Toutes,,Un capitaine propose du cèdre contre du lin tissé.,Échanger,lin tissé -10 ; cèdre +8,Refuser,rien,,,B
+C19,Pillards du désert,Carrière construite,Toutes,,Des pillards rôdent près de la carrière.,Engager des gardes,deben -50,Fermer la carrière,carrière inactive 24 h,Tenter sa chance,40 % : calcaire -40,B
+C20,Un enfant prodige,École construite,Toutes,Thot,Un élève de l'école calcule plus vite que les scribes.,En faire un scribe,scribes +1,Le renvoyer aux champs,paysans +1,,,A
+C21,Le rêve du nomarque,Aléatoire,Toutes,,Tu as rêvé d'un faucon posé sur le grenier. Les devins s'agitent.,Consulter les prêtres,pain -10 ; prochaine crue révélée 6 h en avance,L'oublier,rien,,,B
+C22,La bière a tourné,Stock de bière > 50,Toutes,Sekhmet,Un lot de bière a tourné au vinaigre.,Le jeter,bière -20,Le servir quand même,Sekhmet -10,,,A
+C23,Un messager du palais,Faveur royale élevée,Toutes,,Un messager vient vérifier si ta cité mérite sa réputation.,Offrir un banquet,pain -30 ; bière -20 ; faveur +25,Accueil simple,faveur +5,,,B
+C24,Les ouvriers posent leurs outils,Paysans occupés à 100 % depuis 48 h,Toutes,,Les ouvriers sont épuisés et refusent de reprendre le travail.,Jour de repos,production -100 % pendant 6 h,Ration de bière,bière -15,Ignorer,production -20 % pendant 24 h,A
+C25,Crocodile au port,Port construit,Toutes,,Un crocodile a pris ses quartiers sous le quai.,Offrande à Sobek,poisson -10,Fermer le port,port inactif 12 h,,,A
+C26,Grêle !,Rare,Toutes,,"Le ciel gronde, chose rare en Égypte.",Couvrir les étals,deben -20,Prier,50 % : pain -20,,,A
+C27,Une tombe oubliée,Carrière construite,Toutes,Osiris,Les carriers ont mis au jour une tombe ancienne.,La respecter,carrière inactive 12 h ; Osiris +10,La piller discrètement,or +5 ; 30 % : faveur -20,,,A
+C28,Rumeur de pénurie,"Prix du pain > prix réf. × 1,4",Toutes,,On murmure au port que le pain va manquer.,Vendre ton stock maintenant,pain -30 ; deben +110,Stocker,rien,,,B
+C29,Le vieux pêcheur,Pêcherie construite,Toutes,,Un vieux pêcheur connaît un coin poissonneux.,Le suivre,"pêcherie inactive 6 h, puis poisson +30 % 24 h",Payer ses secrets,deben -20 ; poisson +15 % jusqu'à la fin de l'année,Le remercier,rien,C
+C30,Bastet réclame son dû,Faveur de Bastet très basse,Toutes,Bastet,Plus un seul chat ne s'approche de ta cité.,Grande offrande,poisson -30 ; Bastet +25,Ériger une statue,calcaire -20 ; Bastet +15,Attendre,maisons : montée de niveau bloquée 24 h,C

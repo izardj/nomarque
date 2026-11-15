@@ -1,0 +1,5 @@
+niveau,nom,habitants,classe,impot_par_hab_an,nombre_simu,services_requis
+1,Hutte,8,Paysans,0.5,12,Eau
+2,Maison,12,Artisans,1.5,4,"Eau, temple"
+3,Maison de scribe,16,Scribes,3,2,"Eau, temple, école, marché"
+4,Villa,20,Prêtres,6,0,"Hors MVP : eau, 2 temples, divertissement"

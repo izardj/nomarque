@@ -1,0 +1,9 @@
+destination,route,duree_h,cout_deben,rapporte,quantite,risque_perte
+Sinaï,"Côtière, sûre",48,120,cuivre,20,0.05
+Sinaï,Par le désert,32,120,cuivre,24,0.2
+Byblos,"Cabotage, sûr",72,200,cèdre,30,0.1
+Byblos,Haute mer,48,200,cèdre,34,0.3
+Nubie,"Par le fleuve, sûr",60,250,or,16,0.1
+Nubie,Par les cataractes,40,250,or,20,0.3
+Pount,"Par la côte, sûr",96,400,encens,36,0.15
+Pount,Mer Rouge directe,72,400,encens,44,0.35

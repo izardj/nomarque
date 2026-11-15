@@ -1,0 +1,14 @@
+parametre,valeur,note
+Taux d'activité,0.6,Part des habitants qui travaillent
+Multiplicateur crue basse,0.6,
+Multiplicateur crue bonne,1,
+Multiplicateur crue haute,1.25,
+Prix plancher (× prix réf.),0.6,Achat garanti par les greniers royaux
+Prix plafond (× prix réf.),1.6,Vente garantie par les greniers royaux
+Taxe de marché,0.03,
+Tribut au pharaon,0.1,Part des céréales récoltées
+Durée d'une année du Nil (h de jeu),168,
+Vitesse du serveur,1,"1 = lancement, 3-4 = bêta, 7 = tests internes"
+Rattrapage (multiplicateur),1.5,
+Inactivité avant abandon (jours réels),7,
+Inscription fermée après l'année,3,

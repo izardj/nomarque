@@ -1,0 +1,18 @@
+ressource,niveau,prix_ref_deben,region
+blé,1,1,Moyenne-Égypte
+orge,1,1,Moyenne-Égypte
+lin,1,1.5,Delta
+papyrus,1,1.5,Delta
+poisson,1,1.2,Partout
+argile,1,0.8,Partout
+calcaire,1,2,Moyenne-Égypte
+briques,2,1.5,Partout
+pain,2,2.5,Partout
+bière,2,3,Moyenne-Égypte
+poterie,2,3,Partout
+lin tissé,2,6,Delta
+rouleaux,2,6,Delta
+cuivre,Import,8,Sinaï (expédition)
+cèdre,Import,10,Byblos (expédition)
+or,Import,20,Nubie (expédition)
+encens,Import,15,Pount (expédition)
