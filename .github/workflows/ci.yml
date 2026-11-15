@@ -71,3 +71,7 @@ jobs:
 
       - name: Lint, test and build affected projects
         run: pnpm nx affected -t lint test build --parallel=3
+
+      # Fails when data/economie was edited without re-running the import.
+      - name: Check generated game data
+        run: pnpm nx run tools:check-data
