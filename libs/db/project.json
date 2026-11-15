@@ -43,6 +43,14 @@
         "cwd": "libs/db"
       }
     },
+    "seed": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["generate"],
+      "options": {
+        "command": "tsx prisma/seed.ts",
+        "cwd": "libs/db"
+      }
+    },
     "lint": {
       "dependsOn": ["generate"]
     },

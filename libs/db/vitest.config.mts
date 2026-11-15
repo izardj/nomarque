@@ -13,6 +13,9 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'node',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    globalSetup: ['./test/global-setup.ts'],
+    // Integration tests share one database: run files one after another.
+    fileParallelism: false,
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/libs/db',

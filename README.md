@@ -35,6 +35,8 @@ Jalon J0 (socle) puis J1 (cité solo : `libs/rules` et la fonction `advance`). V
 cp .env.example .env      # configuration locale, ignorée par git
 docker compose up -d      # PostgreSQL (5433), Redis (6380), Mailpit (1025/8025)
 pnpm install
+pnpm nx run db:migrate    # applique les migrations
+pnpm nx run db:seed       # crée le monde de test et son premier règne
 pnpm nx serve api
 pnpm nx serve web
 ```
