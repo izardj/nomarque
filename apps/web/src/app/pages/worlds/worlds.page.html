@@ -1,0 +1,41 @@
+<main class="page">
+  <h1>{{ t.title }}</h1>
+  <p class="secondary">{{ t.intro }}</p>
+
+  <div aria-live="polite">
+    @if (status() === 'loading') {
+    <p class="secondary">{{ common.loading }}</p>
+    } @if (error(); as message) {
+    <p class="message message--error">{{ message }}</p>
+    } @if (status() === 'ready' && entries().length === 0) {
+    <p class="secondary">{{ t.empty }}</p>
+    }
+  </div>
+
+  @for (entry of entries(); track entry.world.id) {
+  <section class="surface" [attr.aria-label]="entry.world.name">
+    <h2>{{ entry.world.name }}</h2>
+    <p class="secondary">{{ speed(entry.world) }}</p>
+    <p>{{ reign(entry.world) }}</p>
+    @if (entry.nome) {
+    <a
+      class="btn btn--primary"
+      [routerLink]="['/worlds', entry.world.id, 'nome']"
+    >
+      {{ t.enter }}
+    </a>
+    } @else {
+    <a
+      class="btn btn--primary"
+      [routerLink]="['/worlds', entry.world.id, 'join']"
+    >
+      {{ t.join }}
+    </a>
+    }
+  </section>
+  }
+
+  <button class="btn btn--secondary" type="button" (click)="logout()">
+    {{ common.logout }}
+  </button>
+</main>

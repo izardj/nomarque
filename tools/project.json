@@ -1,0 +1,27 @@
+{
+  "name": "tools",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/import-data/src",
+  "projectType": "library",
+  "tags": ["scope:tooling", "type:tooling"],
+  "targets": {
+    "import-data": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx tools/import-data/src/main.ts"
+      }
+    },
+    "check-data": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx tools/import-data/src/main.ts --check"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tools/tsconfig.json"
+      }
+    }
+  }
+}

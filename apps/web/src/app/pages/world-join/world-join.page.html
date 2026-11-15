@@ -1,0 +1,84 @@
+<main class="page">
+  <a routerLink="/worlds">{{ common.back }}</a>
+  <h1>{{ t.title }}</h1>
+  <p class="secondary">{{ t.intro }}</p>
+
+  <form
+    class="page join__form"
+    novalidate
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+  >
+    <fieldset class="field">
+      <legend class="field__label">{{ t.regionLegend }}</legend>
+      @for (region of regions; track region.id) {
+      <div class="region">
+        <input
+          class="region__input"
+          type="radio"
+          name="region"
+          formControlName="region"
+          [id]="'region-' + region.id"
+          [value]="region.id"
+        />
+        <label
+          class="region__card"
+          [attr.data-region]="region.id"
+          [for]="'region-' + region.id"
+        >
+          <span class="region__label">{{ region.label }}</span>
+          <span class="region__blurb">{{ region.blurb }}</span>
+        </label>
+      </div>
+      }
+    </fieldset>
+
+    <div class="field">
+      <label class="field__label" for="join-nome-name"
+        >{{ t.nomeNameLabel }}</label
+      >
+      <input
+        id="join-nome-name"
+        class="field__input"
+        type="text"
+        autocomplete="off"
+        formControlName="nomeName"
+        aria-describedby="join-nome-hint"
+      />
+      <span id="join-nome-hint" class="field__hint">{{ t.nomeNameHint }}</span>
+    </div>
+
+    @if (needsDynasty()) {
+    <div class="field">
+      <label class="field__label" for="join-dynasty-name"
+        >{{ t.dynastyNameLabel }}</label
+      >
+      <input
+        id="join-dynasty-name"
+        class="field__input"
+        type="text"
+        autocomplete="off"
+        formControlName="dynastyName"
+        aria-describedby="join-dynasty-hint"
+      />
+      <span id="join-dynasty-hint" class="field__hint"
+        >{{ t.dynastyNameHint }}</span
+      >
+    </div>
+    }
+
+    <div aria-live="polite">
+      @if (validationText(); as message) {
+      <p class="message message--error">{{ message }}</p>
+      } @if (errorText(); as message) {
+      <p class="message message--error">{{ message }}</p>
+      @if (error()?.code === 'already_joined') {
+      <a [routerLink]="['/worlds', id(), 'nome']">{{ enterLabel }}</a>
+      } }
+    </div>
+
+    <button class="btn btn--primary" type="submit" [disabled]="submitting()">
+      {{ submitting() ? t.submitting : t.submit }}
+    </button>
+  </form>
+</main>

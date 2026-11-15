@@ -1,0 +1,388 @@
+// Nomarque database schema.
+// Fixed game data (buildings, resources, cards) is NOT stored here: it lives in
+// libs/data and is referenced by its text id (e.g. "farm_wheat", "bread").
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum WorldStatus {
+  OPEN // accepting players, reign running
+  CLOSED // archived
+}
+
+enum ReignStatus {
+  SCHEDULED
+  RUNNING
+  FUNERALS
+  ENDED
+}
+
+enum Region {
+  UPPER_EGYPT
+  MIDDLE_EGYPT
+  DELTA
+}
+
+enum FloodLevel {
+  LOW
+  GOOD
+  HIGH
+}
+
+enum Zone {
+  DESERT
+  CITY
+  BLACK_LAND
+  RIVER
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  OPEN
+  FILLED
+  CANCELLED
+}
+
+enum ContractStatus {
+  OPEN
+  ACCEPTED
+  DELIVERED
+  EXPIRED
+  CANCELLED
+}
+
+enum RoyalOrderKind {
+  DAILY
+  WEEKLY
+  MONUMENT
+}
+
+// ---------------------------------------------------------------------------
+// Accounts and authentication
+// ---------------------------------------------------------------------------
+
+model Player {
+  id          String   @id @default(uuid()) @db.Uuid
+  /// Always stored lower-cased and trimmed.
+  email       String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+
+  dynasty    Dynasty?
+  sessions   Session[]
+  magicLinks MagicLinkToken[]
+}
+
+/// Single-use login token sent by e-mail. Only its SHA-256 hash is stored.
+/// The player account is created when the token is redeemed, not before.
+model MagicLinkToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// Always stored lower-cased and trimmed.
+  email       String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  requestedIp String?
+  createdAt   DateTime  @default(now())
+  player      Player?   @relation(fields: [playerId], references: [id])
+  playerId    String?   @db.Uuid
+
+  @@index([email, createdAt])
+}
+
+/// Server-side session referenced by an httpOnly cookie. Only the hash of the
+/// cookie value is stored.
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  playerId   String    @db.Uuid
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  userAgent  String?
+  ip         String?
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+}
+
+// ---------------------------------------------------------------------------
+// Meta progression
+// ---------------------------------------------------------------------------
+
+model Dynasty {
+  id        String   @id @default(uuid()) @db.Uuid
+  playerId  String   @unique @db.Uuid
+  name      String
+  prestige  Int      @default(0)
+  cosmetics Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  nomes  Nome[]
+}
+
+// ---------------------------------------------------------------------------
+// Worlds and time
+// ---------------------------------------------------------------------------
+
+/// One server = one Nile.
+model World {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String      @unique
+  /// Nile years per real week (1 = launch, 7 = internal tests).
+  speed     Float
+  status    WorldStatus @default(OPEN)
+  createdAt DateTime    @default(now())
+
+  reigns       Reign[]
+  marketOrders MarketOrder[]
+}
+
+/// A season of 4 Nile years.
+model Reign {
+  id               String      @id @default(uuid()) @db.Uuid
+  worldId          String      @db.Uuid
+  number           Int
+  status           ReignStatus @default(SCHEDULED)
+  /// Version of libs/data the reign started with.
+  dataVersion      String
+  startsAt         DateTime
+  endsAt           DateTime
+  monumentProgress Float       @default(0)
+  createdAt        DateTime    @default(now())
+
+  world       World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  nileYears   NileYear[]
+  nomes       Nome[]
+  royalOrders RoyalOrder[]
+
+  @@unique([worldId, number])
+}
+
+/// Flood drawn in advance, revealed at the start of Akhet.
+model NileYear {
+  id         String     @id @default(uuid()) @db.Uuid
+  reignId    String     @db.Uuid
+  index      Int
+  floodLevel FloodLevel
+  revealedAt DateTime?
+
+  reign Reign @relation(fields: [reignId], references: [id], onDelete: Cascade)
+
+  @@unique([reignId, index])
+}
+
+// ---------------------------------------------------------------------------
+// Nome state
+// ---------------------------------------------------------------------------
+
+/// One city for one reign.
+model Nome {
+  id         String   @id @default(uuid()) @db.Uuid
+  reignId    String   @db.Uuid
+  dynastyId  String   @db.Uuid
+  name       String
+  region     Region
+  deben      Float
+  favor      Float    @default(0)
+  reputation Float    @default(0)
+  /// Game-hour instant (since reign start) up to which production is computed.
+  computedAt Float
+  /// Accumulators owned by libs/rules (need timers, Peret occupancy, active
+  /// effects). Opaque to the database; versioned by libs/rules.
+  rulesState Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  reign           Reign           @relation(fields: [reignId], references: [id], onDelete: Cascade)
+  dynasty         Dynasty         @relation(fields: [dynastyId], references: [id], onDelete: Cascade)
+  parcels         Parcel[]
+  stocks          Stock[]
+  marketOrders    MarketOrder[]
+  issuedContracts Contract[]      @relation("ContractIssuer")
+  takenContracts  Contract[]      @relation("ContractTaker")
+  cardDraws       EventCardDraw[]
+  expeditions     Expedition[]
+  actionLogs      ActionLog[]
+
+  @@unique([reignId, dynastyId])
+}
+
+/// 12 to 20 per nome. Holds a building, a block of houses, or nothing.
+model Parcel {
+  id           String  @id @default(uuid()) @db.Uuid
+  nomeId       String  @db.Uuid
+  slot         Int
+  zone         Zone
+  /// Building id from libs/data, or null for an empty parcel or a house block.
+  buildingType String?
+  /// House level (1..3) when the parcel is a house block, else null.
+  houseLevel   Int?
+  /// Number of houses in the block (pending game-design decision).
+  houseCount   Int     @default(0)
+  workers      Int     @default(0)
+  /// Game-hour instant at which construction ends, null when built.
+  buildEndsAt  Float?
+
+  nome Nome @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@unique([nomeId, slot])
+}
+
+model Stock {
+  nomeId   String @db.Uuid
+  resource String
+  quantity Float  @default(0)
+
+  nome Nome @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@id([nomeId, resource])
+}
+
+// ---------------------------------------------------------------------------
+// Market and contracts (J3). Prices are in hundredths of a deben.
+// ---------------------------------------------------------------------------
+
+model MarketOrder {
+  id        String      @id @default(uuid()) @db.Uuid
+  worldId   String      @db.Uuid
+  port      String
+  /// Null for the royal granaries (system actor).
+  nomeId    String?     @db.Uuid
+  resource  String
+  side      OrderSide
+  quantity  Int
+  remaining Int
+  unitPrice Int
+  status    OrderStatus @default(OPEN)
+  createdAt DateTime    @default(now())
+
+  world      World   @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  nome       Nome?   @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+  buyTrades  Trade[] @relation("BuyOrder")
+  sellTrades Trade[] @relation("SellOrder")
+
+  @@index([worldId, port, resource, side, status, unitPrice, createdAt])
+  @@index([nomeId, status])
+}
+
+model Trade {
+  id          String   @id @default(uuid()) @db.Uuid
+  buyOrderId  String   @db.Uuid
+  sellOrderId String   @db.Uuid
+  quantity    Int
+  unitPrice   Int
+  executedAt  DateTime @default(now())
+
+  buyOrder  MarketOrder @relation("BuyOrder", fields: [buyOrderId], references: [id], onDelete: Cascade)
+  sellOrder MarketOrder @relation("SellOrder", fields: [sellOrderId], references: [id], onDelete: Cascade)
+
+  @@index([executedAt])
+}
+
+model Contract {
+  id           String         @id @default(uuid()) @db.Uuid
+  issuerNomeId String         @db.Uuid
+  takerNomeId  String?        @db.Uuid
+  resource     String
+  quantity     Int
+  /// Hundredths of a deben, locked at creation.
+  totalPrice   Int
+  deadline     DateTime
+  status       ContractStatus @default(OPEN)
+  createdAt    DateTime       @default(now())
+
+  issuer Nome  @relation("ContractIssuer", fields: [issuerNomeId], references: [id], onDelete: Cascade)
+  taker  Nome? @relation("ContractTaker", fields: [takerNomeId], references: [id], onDelete: Cascade)
+
+  @@index([status, deadline])
+}
+
+model RoyalOrder {
+  id           String         @id @default(uuid()) @db.Uuid
+  reignId      String         @db.Uuid
+  kind         RoyalOrderKind
+  resource     String
+  target       Int
+  delivered    Int            @default(0)
+  favorPerUnit Float
+  endsAt       DateTime
+
+  reign Reign @relation(fields: [reignId], references: [id], onDelete: Cascade)
+
+  @@index([reignId, endsAt])
+}
+
+// ---------------------------------------------------------------------------
+// Events and expeditions (J2)
+// ---------------------------------------------------------------------------
+
+/// Default choice is applied at expiry.
+model EventCardDraw {
+  id         String  @id @default(uuid()) @db.Uuid
+  nomeId     String  @db.Uuid
+  cardId     String
+  /// Game-hour instants (since reign start).
+  drawnAt    Float
+  expiresAt  Float
+  choice     String?
+  resolvedAt Float?
+
+  nome Nome @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@unique([nomeId, cardId, drawnAt])
+  @@index([nomeId, resolvedAt])
+}
+
+/// Outcome drawn at departure (seeded by id), revealed on return.
+model Expedition {
+  id          String    @id @default(uuid()) @db.Uuid
+  nomeId      String    @db.Uuid
+  destination String
+  route       String
+  cost        Int
+  /// Game-hour instants (since reign start).
+  departsAt   Float
+  returnsAt   Float
+  outcome     Json?
+  claimedAt   DateTime?
+
+  nome Nome @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@index([nomeId, returnsAt])
+}
+
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
+/// Every player action, for anti-cheat and debugging.
+model ActionLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  nomeId    String   @db.Uuid
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  nome Nome @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@index([nomeId, createdAt])
+}

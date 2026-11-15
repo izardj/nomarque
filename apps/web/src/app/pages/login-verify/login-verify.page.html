@@ -1,0 +1,13 @@
+<main class="page">
+  <h1>{{ status() === 'failed' ? t.failedTitle : t.title }}</h1>
+
+  <div aria-live="polite">
+    <p [class]="status() === 'failed' ? 'message message--error' : 'secondary'">
+      {{ message() }}
+    </p>
+  </div>
+
+  @if (status() === 'failed') {
+  <a class="btn btn--primary" routerLink="/login">{{ t.retry }}</a>
+  }
+</main>

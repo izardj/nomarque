@@ -1,0 +1,11 @@
+node_modules
+dist
+**/dist
+apps/*/dist
+.nx
+.angular
+coverage
+.git
+.env
+.local
+*.log

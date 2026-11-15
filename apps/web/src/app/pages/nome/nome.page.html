@@ -1,0 +1,31 @@
+<header class="nome__header">
+  @if (nome(); as current) {
+  <div class="nome__identity">
+    <div class="nome__name">{{ current.name }}</div>
+    <div class="nome__meta">{{ dynastyAndRegion(current) }}</div>
+  </div>
+  <div class="nome__wealth">
+    <div>{{ deben(current) }}</div>
+    <div class="nome__favor">{{ favor(current) }}</div>
+  </div>
+  }
+</header>
+
+<main class="page">
+  <div aria-live="polite">
+    @if (error(); as message) {
+    <p class="message message--error">{{ message }}</p>
+    } @else if (!nome()) {
+    <p class="secondary">{{ common.loading }}</p>
+    }
+  </div>
+
+  @if (nome()) {
+  <h1>{{ t.title }}</h1>
+  <p class="surface">{{ t.welcome }}</p>
+  }
+
+  <button class="btn btn--secondary" type="button" (click)="logout()">
+    {{ common.logout }}
+  </button>
+</main>
