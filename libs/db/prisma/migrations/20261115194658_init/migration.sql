@@ -38,12 +38,13 @@ CREATE TABLE "Player" (
 -- CreateTable
 CREATE TABLE "MagicLinkToken" (
     "id" UUID NOT NULL,
-    "playerId" UUID NOT NULL,
+    "email" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "usedAt" TIMESTAMP(3),
     "requestedIp" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "playerId" UUID,
 
     CONSTRAINT "MagicLinkToken_pkey" PRIMARY KEY ("id")
 );
@@ -258,7 +259,7 @@ CREATE UNIQUE INDEX "Player_email_key" ON "Player"("email");
 CREATE UNIQUE INDEX "MagicLinkToken_tokenHash_key" ON "MagicLinkToken"("tokenHash");
 
 -- CreateIndex
-CREATE INDEX "MagicLinkToken_playerId_createdAt_idx" ON "MagicLinkToken"("playerId", "createdAt");
+CREATE INDEX "MagicLinkToken_email_createdAt_idx" ON "MagicLinkToken"("email", "createdAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_tokenHash_key" ON "Session"("tokenHash");
@@ -312,7 +313,7 @@ CREATE INDEX "Expedition_nomeId_returnsAt_idx" ON "Expedition"("nomeId", "return
 CREATE INDEX "ActionLog_nomeId_createdAt_idx" ON "ActionLog"("nomeId", "createdAt");
 
 -- AddForeignKey
-ALTER TABLE "MagicLinkToken" ADD CONSTRAINT "MagicLinkToken_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "Player"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MagicLinkToken" ADD CONSTRAINT "MagicLinkToken_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "Player"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Session" ADD CONSTRAINT "Session_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "Player"("id") ON DELETE CASCADE ON UPDATE CASCADE;

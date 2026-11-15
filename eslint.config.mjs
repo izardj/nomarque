@@ -63,4 +63,11 @@ export default [
     // Override or add rules here
     rules: {},
   },
+  {
+    files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*.ts'],
+    rules: {
+      // Tests assert on values they just created.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
 ];

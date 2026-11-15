@@ -89,18 +89,20 @@ model Player {
 }
 
 /// Single-use login token sent by e-mail. Only its SHA-256 hash is stored.
+/// The player account is created when the token is redeemed, not before.
 model MagicLinkToken {
   id          String    @id @default(uuid()) @db.Uuid
-  playerId    String    @db.Uuid
+  /// Always stored lower-cased and trimmed.
+  email       String
   tokenHash   String    @unique
   expiresAt   DateTime
   usedAt      DateTime?
   requestedIp String?
   createdAt   DateTime  @default(now())
+  player      Player?   @relation(fields: [playerId], references: [id])
+  playerId    String?   @db.Uuid
 
-  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@index([playerId, createdAt])
+  @@index([email, createdAt])
 }
 
 /// Server-side session referenced by an httpOnly cookie. Only the hash of the
