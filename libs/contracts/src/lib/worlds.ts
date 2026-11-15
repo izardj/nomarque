@@ -53,3 +53,8 @@ export interface NomeSummaryDto {
 export interface JoinWorldResponse {
   nome: NomeSummaryDto;
 }
+
+/** Answer of GET /worlds/:id/nome: the player's nome in the current reign. */
+export interface MyNomeResponse {
+  nome: NomeSummaryDto | null;
+}
