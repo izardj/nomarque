@@ -514,6 +514,12 @@ importers:
 
   libs/db:
     dependencies:
+      '@nomarque/data':
+        specifier: workspace:*
+        version: link:../data
+      '@nomarque/rules':
+        specifier: workspace:*
+        version: link:../rules
       '@prisma/adapter-pg':
         specifier: 7.10.1
         version: 7.10.1

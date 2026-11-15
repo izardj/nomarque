@@ -30,7 +30,8 @@ export default [
             },
             {
               sourceTag: 'type:db',
-              onlyDependOnLibsWithTags: ['type:data'],
+              // The seed computes reign bounds with the game clock.
+              onlyDependOnLibsWithTags: ['type:data', 'type:rules'],
             },
             {
               sourceTag: 'scope:tooling',
