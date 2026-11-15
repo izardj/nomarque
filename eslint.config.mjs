@@ -33,6 +33,10 @@ export default [
               onlyDependOnLibsWithTags: ['type:data'],
             },
             {
+              sourceTag: 'scope:tooling',
+              onlyDependOnLibsWithTags: ['type:data'],
+            },
+            {
               sourceTag: 'scope:web',
               onlyDependOnLibsWithTags: ['scope:web', 'scope:shared'],
             },

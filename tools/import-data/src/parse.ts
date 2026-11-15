@@ -1,0 +1,539 @@
+// Pure CSV parsers. Each function takes the raw contents of one or more CSV
+// files and returns typed game data plus the French labels needed by the UI.
+// Any label missing from mapping.ts raises an explicit ImportDataError.
+
+import type {
+  BuildingDef,
+  CardChoiceKey,
+  CardPhase,
+  EventCardDef,
+  ExpeditionDestinationId,
+  ExpeditionRouteDef,
+  GameParameters,
+  God,
+  HouseDef,
+  HouseId,
+  HouseNeed,
+  ResourceDef,
+  ResourceFlow,
+  ResourceTier,
+  Service,
+} from '@nomarque/data';
+import { parse } from 'csv-parse/sync';
+import {
+  BUILDING_BY_LABEL,
+  CARD_PHASE_BY_LABEL,
+  DESTINATION_BY_LABEL,
+  GOD_BY_LABEL,
+  HOUSE_BY_LABEL,
+  PARAMETER_BY_LABEL,
+  REGION_BY_LABEL,
+  RESOURCE_BY_LABEL,
+  SERVICE_BY_LABEL,
+  WORKER_CLASS_BY_LABEL,
+  ZONES_BY_LABEL,
+} from './mapping';
+
+export class ImportDataError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ImportDataError';
+  }
+}
+
+interface CsvRow {
+  values: Record<string, string>;
+  line: number;
+}
+
+function readRows(fileName: string, text: string): CsvRow[] {
+  const records = parse<Record<string, string>>(text, {
+    bom: true,
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  return records.map((values, index) => ({ values, line: index + 2 }));
+}
+
+function fail(fileName: string, line: number, message: string): never {
+  throw new ImportDataError(`${fileName}:${line}: ${message}`);
+}
+
+function requireCell(row: CsvRow, fileName: string, column: string): string {
+  const value = row.values[column] ?? '';
+  if (value === '') {
+    fail(fileName, row.line, `missing value for column "${column}"`);
+  }
+  return value;
+}
+
+function parseNumber(row: CsvRow, fileName: string, column: string): number {
+  const raw = requireCell(row, fileName, column);
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    fail(fileName, row.line, `"${raw}" in column "${column}" is not a number`);
+  }
+  return value;
+}
+
+function lookup<T>(
+  table: Record<string, T>,
+  fileName: string,
+  row: CsvRow,
+  column: string,
+  value: string,
+): T {
+  if (!Object.prototype.hasOwnProperty.call(table, value)) {
+    fail(
+      fileName,
+      row.line,
+      `unknown ${column} label "${value}" in column "${column}"`,
+    );
+  }
+  return table[value] as T;
+}
+
+function parseFlows(
+  row: CsvRow,
+  fileName: string,
+  resourceColumn: string,
+  quantityColumn: string,
+): ResourceFlow[] {
+  const label = row.values[resourceColumn] ?? '';
+  if (label === '') {
+    const quantity = row.values[quantityColumn] ?? '';
+    if (quantity !== '') {
+      fail(
+        fileName,
+        row.line,
+        `column "${quantityColumn}" has a value but "${resourceColumn}" is empty`,
+      );
+    }
+    return [];
+  }
+  return [
+    {
+      resource: lookup(RESOURCE_BY_LABEL, fileName, row, 'resource', label),
+      perYear: parseNumber(row, fileName, quantityColumn),
+    },
+  ];
+}
+
+export interface ParsedResources {
+  resources: ResourceDef[];
+  labels: Record<string, string>;
+}
+
+export function parseResources(text: string): ParsedResources {
+  const fileName = 'ressources.csv';
+  const resources: ResourceDef[] = [];
+  const labels: Record<string, string> = {};
+
+  for (const row of readRows(fileName, text)) {
+    const label = requireCell(row, fileName, 'ressource');
+    const id = lookup(RESOURCE_BY_LABEL, fileName, row, 'resource', label);
+    const tierLabel = requireCell(row, fileName, 'niveau');
+    const tier: ResourceTier =
+      tierLabel.toLowerCase() === 'import'
+        ? 'import'
+        : tierLabel === '1'
+          ? 1
+          : tierLabel === '2'
+            ? 2
+            : fail(
+                fileName,
+                row.line,
+                `unknown tier "${tierLabel}" in column "niveau"`,
+              );
+
+    const regionLabel = requireCell(row, fileName, 'region');
+    let regions: ResourceDef['regions'] = [];
+    let importFrom: ExpeditionDestinationId | null = null;
+
+    if (tier === 'import') {
+      if (regionLabel !== 'Partout') {
+        const match = /^(.+?) \(expédition\)$/.exec(regionLabel);
+        if (match === null) {
+          fail(
+            fileName,
+            row.line,
+            `import region "${regionLabel}" must look like "<destination> (expédition)"`,
+          );
+        }
+        importFrom = lookup(
+          DESTINATION_BY_LABEL,
+          fileName,
+          row,
+          'destination',
+          match[1],
+        );
+      }
+    } else if (regionLabel !== 'Partout') {
+      regions = [lookup(REGION_BY_LABEL, fileName, row, 'region', regionLabel)];
+    }
+
+    resources.push({
+      id,
+      tier,
+      referencePrice: parseNumber(row, fileName, 'prix_ref_deben'),
+      regions,
+      importFrom,
+    });
+    labels[id] = label;
+  }
+
+  return { resources, labels };
+}
+
+export interface ParsedBuildings {
+  buildings: BuildingDef[];
+  labels: Record<string, string>;
+}
+
+export function parseBuildings(text: string): ParsedBuildings {
+  const fileName = 'batiments.csv';
+  const buildings: BuildingDef[] = [];
+  const labels: Record<string, string> = {};
+
+  for (const row of readRows(fileName, text)) {
+    const label = requireCell(row, fileName, 'batiment');
+    const mapping = lookup(BUILDING_BY_LABEL, fileName, row, 'building', label);
+    const zoneLabel = requireCell(row, fileName, 'zone');
+    const zones = lookup(ZONES_BY_LABEL, fileName, row, 'zone', zoneLabel);
+    const workerClass = lookup(
+      WORKER_CLASS_BY_LABEL,
+      fileName,
+      row,
+      'worker class',
+      requireCell(row, fileName, 'classe'),
+    );
+    const rangeLabel = row.values['portee_parcelles'] ?? '';
+
+    buildings.push({
+      id: mapping.id,
+      kind: mapping.kind,
+      zones,
+      workerClass,
+      workers: parseNumber(row, fileName, 'ouvriers'),
+      inputs: parseFlows(row, fileName, 'entree', 'entree_par_an'),
+      outputs: parseFlows(row, fileName, 'sortie', 'sortie_par_an'),
+      cost: { deben: parseNumber(row, fileName, 'cout_deben') },
+      buildHours: parseNumber(row, fileName, 'duree_h'),
+      service: mapping.service,
+      range:
+        rangeLabel === ''
+          ? null
+          : parseNumber(row, fileName, 'portee_parcelles'),
+    });
+    labels[mapping.id] = label;
+  }
+
+  return { buildings, labels };
+}
+
+function parseServices(
+  row: CsvRow,
+  fileName: string,
+  raw: string,
+): { services: Service[]; inMvp: boolean } {
+  const trimmed = raw.trim();
+  const inMvp = !/^hors mvp\s*:/i.test(trimmed);
+  const body = trimmed.replace(/^hors mvp\s*:/i, '');
+  const services: Service[] = [];
+
+  for (const part of body.split(',')) {
+    const token = part.trim().toLowerCase();
+    if (token === '') {
+      continue;
+    }
+    const counted = /^(\d+)\s+(.+)$/.exec(token);
+    const count = counted === null ? 1 : Number(counted[1]);
+    const name = counted === null ? token : counted[2];
+    const direct = SERVICE_BY_LABEL[name] as Service | undefined;
+    const singular = name.endsWith('s')
+      ? (SERVICE_BY_LABEL[name.slice(0, -1)] as Service | undefined)
+      : undefined;
+    const service = direct ?? singular;
+    if (service === undefined) {
+      fail(fileName, row.line, `unknown service label "${name}"`);
+    }
+    for (let index = 0; index < count; index += 1) {
+      services.push(service);
+    }
+  }
+
+  return { services, inMvp };
+}
+
+export interface ParsedHouses {
+  houses: HouseDef[];
+  labels: Record<string, string>;
+}
+
+export function parseHouses(
+  housesText: string,
+  needsText: string,
+): ParsedHouses {
+  const housesFile = 'maisons.csv';
+  const needsFile = 'besoins_maisons.csv';
+  const needsByHouse = new Map<HouseId, HouseNeed[]>();
+
+  for (const row of readRows(needsFile, needsText)) {
+    const house = lookup(
+      HOUSE_BY_LABEL,
+      needsFile,
+      row,
+      'house',
+      requireCell(row, needsFile, 'maison'),
+    );
+    const needs = needsByHouse.get(house) ?? [];
+    needs.push({
+      resource: lookup(
+        RESOURCE_BY_LABEL,
+        needsFile,
+        row,
+        'resource',
+        requireCell(row, needsFile, 'ressource'),
+      ),
+      perInhabitantPerYear: parseNumber(row, needsFile, 'qte_par_hab_an'),
+    });
+    needsByHouse.set(house, needs);
+  }
+
+  const houses: HouseDef[] = [];
+  const labels: Record<string, string> = {};
+  const seen = new Set<HouseId>();
+
+  for (const row of readRows(housesFile, housesText)) {
+    const label = requireCell(row, housesFile, 'nom');
+    const id = lookup(HOUSE_BY_LABEL, housesFile, row, 'house', label);
+    seen.add(id);
+    const { services, inMvp } = parseServices(
+      row,
+      housesFile,
+      requireCell(row, housesFile, 'services_requis'),
+    );
+    const level = parseNumber(row, housesFile, 'niveau');
+
+    if (level !== 1 && level !== 2 && level !== 3 && level !== 4) {
+      fail(housesFile, row.line, `unsupported house level "${level}"`);
+    }
+
+    houses.push({
+      id,
+      level,
+      inhabitants: parseNumber(row, housesFile, 'habitants'),
+      workerClass: lookup(
+        WORKER_CLASS_BY_LABEL,
+        housesFile,
+        row,
+        'worker class',
+        requireCell(row, housesFile, 'classe'),
+      ),
+      taxPerInhabitantPerYear: parseNumber(row, housesFile, 'impot_par_hab_an'),
+      needs: needsByHouse.get(id) ?? [],
+      services,
+      inMvp,
+    });
+    labels[id] = label;
+  }
+
+  for (const house of needsByHouse.keys()) {
+    if (!seen.has(house)) {
+      throw new ImportDataError(
+        `${needsFile}: needs reference house "${house}", which is not in ${housesFile}`,
+      );
+    }
+  }
+
+  return { houses, labels };
+}
+
+type ParameterPath =
+  (typeof PARAMETER_BY_LABEL)[keyof typeof PARAMETER_BY_LABEL];
+
+export function parseParameters(text: string): GameParameters {
+  const fileName = 'parametres.csv';
+  const values = new Map<ParameterPath, number>();
+
+  for (const row of readRows(fileName, text)) {
+    const label = requireCell(row, fileName, 'parametre');
+    const path = (
+      PARAMETER_BY_LABEL as Record<string, ParameterPath | undefined>
+    )[label];
+    if (path === undefined) {
+      fail(fileName, row.line, `unknown parameter label "${label}"`);
+    }
+    values.set(path, parseNumber(row, fileName, 'valeur'));
+  }
+
+  const value = (path: ParameterPath): number => {
+    const found = values.get(path);
+    if (found === undefined) {
+      throw new ImportDataError(`${fileName}: missing parameter "${path}"`);
+    }
+    return found;
+  };
+
+  return {
+    activityRate: value('activityRate'),
+    floodMultiplier: {
+      low: value('floodMultiplier.low'),
+      good: value('floodMultiplier.good'),
+      high: value('floodMultiplier.high'),
+    },
+    priceFloorFactor: value('priceFloorFactor'),
+    priceCeilingFactor: value('priceCeilingFactor'),
+    marketTax: value('marketTax'),
+    tributeRate: value('tributeRate'),
+    yearHours: value('yearHours'),
+    defaultSpeed: value('defaultSpeed'),
+    catchUpMultiplier: value('catchUpMultiplier'),
+    inactivityDaysBeforeAbandon: value('inactivityDaysBeforeAbandon'),
+    registrationClosesAfterYear: value('registrationClosesAfterYear'),
+  };
+}
+
+export interface ParsedExpeditions {
+  expeditions: ExpeditionRouteDef[];
+  routeLabels: Record<string, string>;
+  destinationLabels: Record<string, string>;
+}
+
+export function parseExpeditions(text: string): ParsedExpeditions {
+  const fileName = 'expeditions.csv';
+  const expeditions: ExpeditionRouteDef[] = [];
+  const routeLabels: Record<string, string> = {};
+  const destinationLabels: Record<string, string> = {};
+
+  for (const row of readRows(fileName, text)) {
+    const destinationLabel = requireCell(row, fileName, 'destination');
+    const destination = lookup(
+      DESTINATION_BY_LABEL,
+      fileName,
+      row,
+      'destination',
+      destinationLabel,
+    );
+    const routeLabel = requireCell(row, fileName, 'route');
+    const safe = /sûr/i.test(routeLabel);
+    const id = `${destination}_${safe ? 'safe' : 'fast'}`;
+
+    expeditions.push({
+      id,
+      destination,
+      safe,
+      durationHours: parseNumber(row, fileName, 'duree_h'),
+      costDeben: parseNumber(row, fileName, 'cout_deben'),
+      resource: lookup(
+        RESOURCE_BY_LABEL,
+        fileName,
+        row,
+        'resource',
+        requireCell(row, fileName, 'rapporte'),
+      ),
+      quantity: parseNumber(row, fileName, 'quantite'),
+      lossRisk: parseNumber(row, fileName, 'risque_perte'),
+    });
+    routeLabels[id] = routeLabel;
+    destinationLabels[destination] = destinationLabel;
+  }
+
+  return { expeditions, routeLabels, destinationLabels };
+}
+
+export interface CardLabels {
+  title: string;
+  text: string;
+  choices: Record<string, { label: string; effect: string }>;
+}
+
+export interface ParsedCards {
+  cards: EventCardDef[];
+  labels: Record<string, CardLabels>;
+}
+
+const CARD_CHOICE_COLUMNS: readonly {
+  key: CardChoiceKey;
+  label: string;
+  effect: string;
+}[] = [
+  { key: 'a', label: 'choix_a', effect: 'effet_a' },
+  { key: 'b', label: 'choix_b', effect: 'effet_b' },
+  { key: 'c', label: 'choix_c', effect: 'effet_c' },
+];
+
+function parseChoiceKey(
+  fileName: string,
+  row: CsvRow,
+  raw: string,
+): CardChoiceKey {
+  const key = raw.toLowerCase();
+  if (key !== 'a' && key !== 'b' && key !== 'c') {
+    fail(fileName, row.line, `unknown default choice "${raw}"`);
+  }
+  return key;
+}
+
+export function parseCards(text: string): ParsedCards {
+  const fileName = 'cartes.csv';
+  const cards: EventCardDef[] = [];
+  const labels: Record<string, CardLabels> = {};
+
+  for (const row of readRows(fileName, text)) {
+    const id = requireCell(row, fileName, 'id');
+    const phaseLabel = row.values['phase'] ?? '';
+    if (phaseLabel === '') {
+      fail(
+        fileName,
+        row.line,
+        'column "phase" is required because cards have no null phase',
+      );
+    }
+    const phase: CardPhase = lookup(
+      CARD_PHASE_BY_LABEL,
+      fileName,
+      row,
+      'phase',
+      phaseLabel,
+    );
+    const godLabel = row.values['dieu'] ?? '';
+    const god: God | null =
+      godLabel === ''
+        ? null
+        : lookup(GOD_BY_LABEL, fileName, row, 'god', godLabel);
+
+    const choices: EventCardDef['choices'] = [];
+    const choiceLabels: CardLabels['choices'] = {};
+    for (const column of CARD_CHOICE_COLUMNS) {
+      const label = row.values[column.label] ?? '';
+      if (label === '') {
+        continue;
+      }
+      const effect = row.values[column.effect] ?? '';
+      choices.push({ key: column.key, effectRaw: effect });
+      choiceLabels[column.key] = { label, effect };
+    }
+
+    const defaultChoice = parseChoiceKey(
+      fileName,
+      row,
+      requireCell(row, fileName, 'defaut'),
+    );
+    const title = requireCell(row, fileName, 'titre');
+    const cardText = requireCell(row, fileName, 'texte');
+
+    cards.push({
+      id,
+      triggerRaw: requireCell(row, fileName, 'declencheur'),
+      phase,
+      god,
+      choices,
+      defaultChoice,
+    });
+    labels[id] = { title, text: cardText, choices: choiceLabels };
+  }
+
+  return { cards, labels };
+}
