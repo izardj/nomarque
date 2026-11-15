@@ -28,3 +28,15 @@ Monorepo Nx en TypeScript : Angular + PixiJS (PWA) pour le client, NestJS pour l
 ## Prochaine étape
 
 Jalon J0 (socle) puis J1 (cité solo : `libs/rules` et la fonction `advance`). Voir le [plan de développement](docs/spec-technique.md#plan-de-développement).
+
+## Démarrer en local
+
+```sh
+cp .env.example .env      # configuration locale, ignorée par git
+docker compose up -d      # PostgreSQL (5433), Redis (6380), Mailpit (1025/8025)
+pnpm install
+pnpm nx serve api
+pnpm nx serve web
+```
+
+Les e-mails capturés s'affichent sur [http://localhost:8025](http://localhost:8025). Les images `api`, `worker` et `web` se construisent avec `docker compose --profile app build`.
