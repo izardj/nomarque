@@ -63,6 +63,11 @@ services:
       # Inside the Compose network, services are reached by service name.
       DATABASE_URL: postgresql://${POSTGRES_USER:-nomarque}:${POSTGRES_PASSWORD:-nomarque}@postgres:5432/${POSTGRES_DB:-nomarque}?schema=public
       REDIS_URL: redis://redis:6379
+      # Magic links open the front served by the web service.
+      APP_URL: http://localhost:${WEB_PORT:-8080}
+      # The local stack delivers e-mails to Mailpit.
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
     ports:
       # Loopback only: the API trusts X-Forwarded-For from the nginx proxy.
       - '127.0.0.1:${API_PORT:-3000}:3000'

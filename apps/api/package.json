@@ -96,7 +96,9 @@
     "@nomarque/contracts": "workspace:*",
     "@nomarque/data": "workspace:*",
     "@nomarque/db": "workspace:*",
-    "@nomarque/rules": "workspace:*"
+    "@nomarque/rules": "workspace:*",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0"
