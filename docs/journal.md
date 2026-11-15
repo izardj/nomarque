@@ -56,6 +56,14 @@ Validation : un joueur se connecte par lien magique et rejoint un monde.
 - Docker Compose et images (DeepSeek) acceptés avec deux corrections d'Opus : nginx retirait le préfixe `/api` (toutes les routes auraient répondu 404), et les ports étaient ouverts sur toutes les interfaces alors que l'API fait confiance à `X-Forwarded-For`.
 - Module `worlds` (Sonnet) accepté sans retouche : 16 tests d'intégration, dont deux `join` simultanés.
 
+- Écrans web de connexion, choix du monde et de la région (Sonnet) acceptés sans retouche : 34 tests.
+- Seed d'un monde de test (DeepSeek) accepté. Opus a sérialisé les tests qui touchent la base (`api:test`, `db:test` en `parallelism: false`) : ils vidaient les mêmes tables en parallèle en CI.
+- Défauts trouvés par Opus au test de bout en bout, corrigés :
+  - `pnpm install --frozen-lockfile` échouait en CI (`ERR_PNPM_IGNORED_BUILDS`) : scripts de build de Prisma autorisés dans `pnpm-workspace.yaml` ;
+  - l'image de l'API plantait au démarrage (`Cannot find module '@prisma/adapter-pg'`) : les libs sont embarquées dans le bundle mais leurs dépendances npm restent externes, elles doivent être déclarées dans `apps/api/package.json` ;
+  - dans Docker, l'API visait un SMTP sur `localhost` et des liens vers le serveur de dev : redirigés vers Mailpit et le front nginx.
+- Validation de J0 tenue : parcours complet dans la pile Docker (nginx → API → PostgreSQL → Mailpit), par script et dans Chromium (captures dans `docs/img/j0/`).
+
 #### Décisions
 
 - Le jeton de lien magique porte l'e-mail ; le compte joueur n'est créé qu'à la vérification (pas de comptes fantômes).
