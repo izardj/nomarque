@@ -52,6 +52,9 @@
         "signal": true
       },
       "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/web/proxy.conf.json"
+      },
       "defaultConfiguration": "development",
       "configurations": {
         "production": {

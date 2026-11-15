@@ -1,3 +1,38 @@
 import { Route } from '@angular/router';
+import { authGuard, guestGuard } from './core/guards';
 
-export const appRoutes: Route[] = [];
+export const appRoutes: Route[] = [
+  {
+    path: 'login',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./pages/login/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'login/verify',
+    loadComponent: () =>
+      import('./pages/login-verify/login-verify.page').then(
+        (m) => m.LoginVerifyPage,
+      ),
+  },
+  {
+    path: 'worlds',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/worlds/worlds.page').then((m) => m.WorldsPage),
+  },
+  {
+    path: 'worlds/:id/join',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/world-join/world-join.page').then((m) => m.WorldJoinPage),
+  },
+  {
+    path: 'worlds/:id/nome',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/nome/nome.page').then((m) => m.NomePage),
+  },
+  { path: '', pathMatch: 'full', redirectTo: 'worlds' },
+  { path: '**', redirectTo: 'worlds' },
+];

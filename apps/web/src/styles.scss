@@ -1,1 +1,204 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global theme: palette, zones, base layout and shared UI building blocks. */
+:root {
+  --color-papyrus: #f4ebd8;
+  --color-limestone: #fbf6ea;
+  --color-carbon: #1f1a14;
+  --color-text-secondary: #5c5146;
+  --color-egyptian-blue: #1d5c8c;
+  --color-egyptian-blue-hover: #123e60;
+  --color-gold: #b7791f;
+  --color-gold-text: #8a5a12;
+  --color-malachite: #2f7a4f;
+  --color-red-ochre: #a63d2a;
+  --color-nile: #3d7ea6;
+  --color-line: #c9b99a;
+
+  --zone-desert: #e3c48d;
+  --zone-city: #efe2c6;
+  --zone-black-land: #4a3b2c;
+  --zone-river: #9cc6da;
+
+  --font-title: Cinzel, serif;
+  --font-body: Inter, system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-papyrus);
+}
+
+body {
+  margin: 0;
+  background: var(--color-papyrus);
+  color: var(--color-carbon);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Mobile first: a single column, centred and capped on wide screens. */
+app-root {
+  display: block;
+  max-width: 390px;
+  min-height: 100dvh;
+  margin: 0 auto;
+}
+
+@media (min-width: 391px) {
+  app-root {
+    border-inline: 1px solid var(--color-line);
+  }
+}
+
+a {
+  color: var(--color-egyptian-blue);
+
+  &:hover {
+    color: var(--color-egyptian-blue-hover);
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-egyptian-blue);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+p {
+  margin: 0;
+}
+
+/* Page layout shared by every screen. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 16px 32px;
+}
+
+.surface {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-limestone);
+}
+
+.secondary {
+  color: var(--color-text-secondary);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Form controls. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.field__label {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field__hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.field__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-limestone);
+  color: var(--color-carbon);
+  font: inherit;
+  font-size: 16px;
+
+  &:focus-visible {
+    border-color: var(--color-egyptian-blue);
+  }
+}
+
+/* Buttons and button-looking links. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1.5px solid var(--color-egyptian-blue);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--color-egyptian-blue);
+  color: #ffffff;
+
+  &:hover {
+    background: var(--color-egyptian-blue-hover);
+    border-color: var(--color-egyptian-blue-hover);
+    color: #ffffff;
+  }
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--color-egyptian-blue);
+
+  &:hover {
+    color: var(--color-egyptian-blue-hover);
+  }
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Live messages (errors, confirmations). */
+.message {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.message--error {
+  color: var(--color-red-ochre);
+}
+
+.message--success {
+  color: var(--color-malachite);
+}
