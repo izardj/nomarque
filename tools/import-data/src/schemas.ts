@@ -215,13 +215,10 @@ export const gameDataSchema = z
           ['buildings', buildingIndex, 'inputs', flowIndex, 'resource'],
           `building "${building.id}"`,
         );
-        if (
-          building.kind === 'workshop' &&
-          !producedResources.has(flow.resource)
-        ) {
+        if (!producedResources.has(flow.resource)) {
           context.addIssue({
             code: 'custom',
-            message: `workshop "${building.id}" consumes "${flow.resource}", which no building produces and no expedition brings back`,
+            message: `building "${building.id}" consumes "${flow.resource}", which no building produces and no expedition brings back`,
             path: ['buildings', buildingIndex, 'inputs', flowIndex, 'resource'],
           });
         }

@@ -53,7 +53,7 @@ describe('gameDataSchema', () => {
     }
     const messages = result.error.issues.map((issue) => issue.message);
     expect(messages).toContain(
-      'workshop "bakery" consumes "copper", which no building produces and no expedition brings back',
+      'building "bakery" consumes "copper", which no building produces and no expedition brings back',
     );
   });
 
