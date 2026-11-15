@@ -6,7 +6,8 @@
     "lint": "nx run-many -t lint",
     "test": "nx run-many -t test",
     "build": "nx run-many -t build",
-    "postinstall": "prisma generate --config libs/db/prisma.config.ts"
+    "postinstall": "prisma generate --config libs/db/prisma.config.ts",
+    "ci": "nx affected -t lint test build"
   },
   "private": true,
   "dependencies": {
