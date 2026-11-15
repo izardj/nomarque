@@ -72,6 +72,9 @@
             "buildTarget": "api:build:production"
           }
         }
+      },
+      "test": {
+        "parallelism": false
       }
     },
     "tags": [
