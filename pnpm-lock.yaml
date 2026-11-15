@@ -526,6 +526,9 @@ importers:
 
   libs/rules:
     dependencies:
+      '@nomarque/data':
+        specifier: workspace:*
+        version: link:../data
       tslib:
         specifier: ^2.3.0
         version: 2.9.1
