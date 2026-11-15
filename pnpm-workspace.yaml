@@ -3,6 +3,9 @@ packages:
   - 'libs/*'
 
 allowBuilds:
+  # Downloads the schema engine used by prisma migrate.
+  '@prisma/engines': true
+  prisma: true
   '@parcel/watcher': true
   '@swc/core': true
   nx: true
