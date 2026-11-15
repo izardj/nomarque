@@ -5,7 +5,8 @@
   "scripts": {
     "lint": "nx run-many -t lint",
     "test": "nx run-many -t test",
-    "build": "nx run-many -t build"
+    "build": "nx run-many -t build",
+    "postinstall": "prisma generate --config libs/db/prisma.config.ts"
   },
   "private": true,
   "dependencies": {
@@ -18,6 +19,9 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "pg": "^8.23.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0"
   },
@@ -46,6 +50,7 @@
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
     "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
     "@typescript-eslint/utils": "^8.58.0",
     "@vitest/coverage-v8": "^4.0.0",
     "angular-eslint": "^22.5.0",
@@ -56,6 +61,7 @@
     "jsonc-eslint-parser": "^2.1.0",
     "nx": "24.0.0",
     "prettier": "^3.8.1",
+    "prisma": "7.10.1",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.58.0",
