@@ -67,6 +67,26 @@ describe('real data import', () => {
     });
   });
 
+  it('imports the starting map, stocks, house zones and cereals', () => {
+    expect(data.map.map((slot) => slot.slot)).toEqual([...Array(16).keys()]);
+    expect(data.map[4].start).toEqual({ kind: 'houses', house: 'hut' });
+    expect(data.map[8].start).toEqual({
+      kind: 'building',
+      building: 'farm_wheat',
+    });
+    expect(data.startingStocks).toEqual({ wheat: 150 });
+    expect(data.parameters.houseZones).toEqual([
+      'city',
+      'black_land',
+      'desert',
+    ]);
+    expect(
+      data.resources
+        .filter((resource) => resource.cereal)
+        .map((resource) => resource.id),
+    ).toEqual(['wheat', 'barley']);
+  });
+
   it('derives a deterministic 12 character hexadecimal version', () => {
     expect(data.version).toMatch(/^[0-9a-f]{12}$/);
     expect(buildGameData(readRealSources()).data.version).toBe(data.version);
