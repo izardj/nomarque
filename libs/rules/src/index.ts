@@ -7,3 +7,4 @@ export * from './lib/catalog';
 export * from './lib/economy';
 export * from './lib/advance';
 export * from './lib/actions';
+export * from './lib/forecast';
