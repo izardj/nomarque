@@ -12,3 +12,10 @@ Vitesse du serveur,1,"1 = lancement, 3-4 = bêta, 7 = tests internes"
 Rattrapage (multiplicateur),1.5,
 Inactivité avant abandon (jours réels),7,
 Inscription fermée après l'année,3,
+Stockage de base par ressource,200,Provisoire J1 : sans grenier
+Capacité d'un grenier par ressource,400,Provisoire J1 : s'ajoute au stockage de base
+Maisons par îlot,3,Provisoire J1 : maquette « Huttes ×3 »
+Coût d'un îlot de maisons (deben),30,Provisoire J1
+Durée de construction d'un îlot (h de jeu),4,Provisoire J1
+Deben de départ,300,Provisoire J1
+Zones des îlots de maisons,"Ville, Terre noire, Désert",Provisoire J1 : pas sur le fleuve

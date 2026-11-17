@@ -30,6 +30,23 @@ Validation : un joueur se connecte par lien magique et rejoint un monde.
 | 11 | Seed : un monde et son premier règne | `feat/j0-seed` | DeepSeek | 6 |
 | 12 | Revue de chaque livraison, test de bout en bout de la validation | — | Opus | tout |
 
+## Plan — J1 · Cité solo
+
+Validation : le test de propriété d'`advance` est vert.
+
+| # | Tâche | Branche | Modèle | Dépend de |
+| --- | --- | --- | --- | --- |
+| 1 | Données provisoires (paramètres, carte et stocks de départ) et contrat de `libs/data` | `feat/j1-data-contract` | Opus | — |
+| 2 | Import des nouvelles données (carte, stocks, paramètres, céréales) | `feat/j1-import-data` | DeepSeek | 1 |
+| 3 | Calendrier du Nil : `phaseAt`, `nextBoundary` | `feat/j1-rules` | Opus | 1 |
+| 4 | État du nome, main-d'œuvre, constructions, maisons, actions pures (`build`, `assignWorkers`), cité de départ | `feat/j1-rules` | Opus | 3 |
+| 5 | `advance` et son test de propriété | `feat/j1-rules` | Opus | 4 |
+| 6 | DTO du nome, du rapport et des actions (`libs/contracts`) | `feat/j1-contracts` | Opus | 4 |
+| 7 | API du nome : pipeline d'action (verrou, `advance`, validation, écriture, `ActionLog`), `GET /nomes/me`, construire, affecter, cité de départ au `join` | `feat/j1-nome-api` | Sonnet | 5, 6 |
+| 8 | Écrans Rapport, Cité, Ouvriers et barre d'onglets | `feat/j1-web-city` | Sonnet | 6 |
+| 9 | Textes français et tests unitaires complémentaires | `chore/j1-i18n` | DeepSeek | 8 |
+| 10 | Revue de chaque livraison, test de bout en bout, captures | — | Opus | tout |
+
 ## Décisions d'architecture (J0)
 
 - **pnpm** comme gestionnaire de paquets, Nx en version courante.

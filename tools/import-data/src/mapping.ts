@@ -35,6 +35,12 @@ export const RESOURCE_BY_LABEL: Record<string, ResourceId> = {
   encens: 'incense',
 };
 
+/** Harvested grains the tribute is levied on ("Part des céréales récoltées"). */
+export const CEREAL_RESOURCES: ReadonlySet<ResourceId> = new Set<ResourceId>([
+  'wheat',
+  'barley',
+]);
+
 export interface BuildingMapping {
   id: BuildingId;
   kind: BuildingKind;
@@ -149,4 +155,12 @@ export const PARAMETER_BY_LABEL = {
   'Rattrapage (multiplicateur)': 'catchUpMultiplier',
   'Inactivité avant abandon (jours réels)': 'inactivityDaysBeforeAbandon',
   "Inscription fermée après l'année": 'registrationClosesAfterYear',
+  'Stockage de base par ressource': 'baseStorage',
+  "Capacité d'un grenier par ressource": 'granaryCapacity',
+  'Maisons par îlot': 'housesPerBlock',
+  "Coût d'un îlot de maisons (deben)": 'houseBlockCost.deben',
+  "Durée de construction d'un îlot (h de jeu)": 'houseBlockBuildHours',
+  'Deben de départ': 'startingDeben',
+  /** Comma-separated zone labels, parsed with ZONES_BY_LABEL. */
+  'Zones des îlots de maisons': 'houseZones',
 } as const;

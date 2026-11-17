@@ -1,0 +1,17 @@
+emplacement,ligne,colonne,zone,contenu
+0,0,0,Désert,
+1,0,1,Désert,
+2,0,2,Désert,
+3,0,3,Désert,
+4,1,0,Ville,Hutte
+5,1,1,Ville,Puits
+6,1,2,Ville,Grenier
+7,1,3,Ville,
+8,2,0,Terre noire,Champ de blé
+9,2,1,Terre noire,
+10,2,2,Terre noire,
+11,2,3,Terre noire,
+12,3,0,Fleuve,
+13,3,1,Fleuve,
+14,3,2,Fleuve,
+15,3,3,Fleuve,
