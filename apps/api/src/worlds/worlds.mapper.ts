@@ -14,7 +14,8 @@ import type {
   World,
   WorldStatus,
 } from '@nomarque/db';
-import { gameHours } from '@nomarque/rules';
+import { GAME_DATA } from '@nomarque/data';
+import { gameHours, reignLengthHours } from '@nomarque/rules';
 
 const REGION_TO_DTO: Record<Region, RegionDto> = {
   UPPER_EGYPT: 'upper_egypt',
@@ -40,6 +41,10 @@ const REIGN_STATUS_TO_DTO: Record<ReignStatus, ReignStatusDto> = {
   ENDED: 'ended',
 };
 
+export function regionToDto(region: Region): RegionDto {
+  return REGION_TO_DTO[region];
+}
+
 export function regionFromDto(region: RegionDto): Region {
   return REGION_FROM_DTO[region];
 }
@@ -49,6 +54,18 @@ export function reignGameHours(reign: Reign, world: World, now: Date): number {
   return gameHours(
     { startsAtMs: reign.startsAt.getTime(), speed: world.speed },
     now.getTime(),
+  );
+}
+
+/** Game hours of the reign at `now`, kept within the reign: 0 until it starts. */
+export function clampedReignHours(
+  reign: Reign,
+  world: World,
+  now: Date,
+): number {
+  return Math.min(
+    Math.max(0, reignGameHours(reign, world, now)),
+    reignLengthHours(GAME_DATA.parameters),
   );
 }
 
@@ -86,7 +103,7 @@ export function toNomeSummaryDto(
     id: nome.id,
     reignId: nome.reignId,
     name: nome.name,
-    region: REGION_TO_DTO[nome.region],
+    region: regionToDto(nome.region),
     dynastyName,
     deben: nome.deben,
     favor: nome.favor,
