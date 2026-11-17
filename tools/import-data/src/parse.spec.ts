@@ -6,6 +6,8 @@ import {
   parseHouses,
   parseParameters,
   parseResources,
+  parseStartingMap,
+  parseStartingStocks,
 } from './parse';
 
 describe('parseResources', () => {
@@ -24,6 +26,7 @@ poisson,1,1.2,Partout
         referencePrice: 1,
         regions: ['middle_egypt'],
         importFrom: null,
+        cereal: true,
       },
       {
         id: 'copper',
@@ -31,6 +34,7 @@ poisson,1,1.2,Partout
         referencePrice: 8,
         regions: [],
         importFrom: 'sinai',
+        cereal: false,
       },
       {
         id: 'fish',
@@ -38,6 +42,7 @@ poisson,1,1.2,Partout
         referencePrice: 1.2,
         regions: [],
         importFrom: null,
+        cereal: false,
       },
     ]);
     expect(labels).toEqual({
@@ -120,8 +125,7 @@ Villa,poisson,3
 });
 
 describe('parseParameters', () => {
-  it('maps parameter labels, including the nested flood multipliers', () => {
-    const csv = `parametre,valeur,note
+  const csv = `parametre,valeur,note
 Taux d'activité,0.6,
 Multiplicateur crue basse,0.6,
 Multiplicateur crue bonne,1,
@@ -135,7 +139,16 @@ Vitesse du serveur,1,
 Rattrapage (multiplicateur),1.5,
 Inactivité avant abandon (jours réels),7,
 Inscription fermée après l'année,3,
+Stockage de base par ressource,200,
+Capacité d'un grenier par ressource,400,
+Maisons par îlot,3,
+Coût d'un îlot de maisons (deben),30,
+Durée de construction d'un îlot (h de jeu),4,
+Deben de départ,300,
+Zones des îlots de maisons,"Ville, Terre noire, Désert",
 `;
+
+  it('maps parameter labels, including the nested flood multipliers', () => {
     const parameters = parseParameters(csv);
 
     expect(parameters.floodMultiplier).toEqual({
@@ -145,6 +158,67 @@ Inscription fermée après l'année,3,
     });
     expect(parameters.yearHours).toBe(168);
     expect(parameters.registrationClosesAfterYear).toBe(3);
+    expect(parameters).toMatchObject({
+      baseStorage: 200,
+      granaryCapacity: 400,
+      housesPerBlock: 3,
+      houseBlockCost: { deben: 30 },
+      houseBlockBuildHours: 4,
+      startingDeben: 300,
+    });
+  });
+
+  it('resolves house zones from comma-separated zone labels', () => {
+    expect(parseParameters(csv).houseZones).toEqual([
+      'city',
+      'black_land',
+      'desert',
+    ]);
+  });
+});
+
+describe('parseStartingMap', () => {
+  it('sorts slots and resolves zones, buildings and houses', () => {
+    const csv = `emplacement,ligne,colonne,zone,contenu
+1,0,1,Désert,
+0,0,0,Ville,Hutte
+2,0,2,Terre noire,Champ de blé
+`;
+    const slots = parseStartingMap(csv);
+
+    expect(
+      slots.map(({ slot, row, col, zone, start }) => [
+        slot,
+        row,
+        col,
+        zone,
+        start,
+      ]),
+    ).toEqual([
+      [0, 0, 0, 'city', { kind: 'houses', house: 'hut' }],
+      [1, 0, 1, 'desert', null],
+      [2, 0, 2, 'black_land', { kind: 'building', building: 'farm_wheat' }],
+    ]);
+  });
+});
+
+describe('parseStartingStocks', () => {
+  it('maps resource labels to quantities', () => {
+    const csv = `ressource,quantite
+blé,150
+poisson,0
+`;
+    expect(parseStartingStocks(csv)).toEqual({ wheat: 150, fish: 0 });
+  });
+
+  it('fails when a resource appears more than once', () => {
+    const csv = `ressource,quantite
+blé,150
+blé,20
+`;
+    expect(() => parseStartingStocks(csv)).toThrow(
+      /stocks_depart\.csv:3: resource "wheat" appears more than once/,
+    );
   });
 });
 

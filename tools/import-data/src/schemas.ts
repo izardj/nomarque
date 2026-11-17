@@ -34,6 +34,8 @@ const CARD_CHOICE_KEYS = ['a', 'b', 'c'] as const;
 /** All game values must be finite and non-negative. */
 const nonNegativeNumber = z.number().min(0);
 
+const positiveNumber = z.number().positive();
+
 const nonNegativeInteger = z.number().int().min(0);
 
 const resourceFlowSchema = z.object({
@@ -61,6 +63,7 @@ const resourceSchema = z.object({
   referencePrice: nonNegativeNumber,
   regions: z.array(z.enum(REGIONS)),
   importFrom: z.enum(EXPEDITION_DESTINATIONS).nullable(),
+  cereal: z.boolean(),
 });
 
 const houseNeedSchema = z.object({
@@ -95,6 +98,13 @@ const parametersSchema = z.object({
   catchUpMultiplier: nonNegativeNumber,
   inactivityDaysBeforeAbandon: nonNegativeNumber,
   registrationClosesAfterYear: nonNegativeNumber,
+  baseStorage: positiveNumber,
+  granaryCapacity: positiveNumber,
+  housesPerBlock: positiveNumber,
+  houseBlockCost: z.object({ deben: positiveNumber }),
+  houseBlockBuildHours: positiveNumber,
+  houseZones: z.array(z.enum(ZONES)).min(1),
+  startingDeben: nonNegativeNumber,
 });
 
 const expeditionSchema = z.object({
@@ -120,6 +130,19 @@ const cardSchema = z.object({
   god: z.enum(GODS).nullable(),
   choices: z.array(cardChoiceSchema).min(1),
   defaultChoice: z.enum(CARD_CHOICE_KEYS),
+});
+
+const startingContentSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('building'), building: z.enum(BUILDING_IDS) }),
+  z.object({ kind: z.literal('houses'), house: z.enum(HOUSE_IDS) }),
+]);
+
+const mapSlotSchema = z.object({
+  slot: nonNegativeInteger,
+  row: nonNegativeInteger,
+  col: nonNegativeInteger,
+  zone: z.enum(ZONES),
+  start: startingContentSchema.nullable(),
 });
 
 function reportDuplicates(
@@ -153,6 +176,8 @@ export const gameDataSchema = z
     parameters: parametersSchema,
     expeditions: z.array(expeditionSchema),
     cards: z.array(cardSchema).min(1),
+    map: z.array(mapSlotSchema),
+    startingStocks: z.record(z.string(), nonNegativeNumber),
   })
   .superRefine((data, context) => {
     reportDuplicates(
@@ -255,6 +280,76 @@ export const gameDataSchema = z
         ['expeditions', expeditionIndex, 'resource'],
         `expedition "${expedition.id}"`,
       );
+    });
+
+    const issue = (message: string, path: (string | number)[]): void => {
+      context.addIssue({ code: 'custom', message, path });
+    };
+
+    data.map.forEach((slot, slotIndex) => {
+      if (slot.slot !== slotIndex) {
+        issue(`expected slot ${slotIndex}, found ${slot.slot}`, [
+          'map',
+          slotIndex,
+          'slot',
+        ]);
+      }
+    });
+
+    const positions = new Set<string>();
+    data.map.forEach((slot, slotIndex) => {
+      const position = `${slot.row}:${slot.col}`;
+      if (positions.has(position)) {
+        issue(`duplicate map position (${slot.row}, ${slot.col})`, [
+          'map',
+          slotIndex,
+          'col',
+        ]);
+      }
+      positions.add(position);
+    });
+
+    const buildingsById = new Map(
+      data.buildings.map((building) => [building.id, building]),
+    );
+    const housesById = new Map(data.houses.map((house) => [house.id, house]));
+
+    data.map.forEach((slot, slotIndex) => {
+      if (slot.start === null) {
+        return;
+      }
+      if (slot.start.kind === 'building') {
+        const building = buildingsById.get(slot.start.building);
+        if (building !== undefined && !building.zones.includes(slot.zone)) {
+          issue(
+            `starting building "${building.id}" cannot be placed on zone "${slot.zone}"`,
+            ['map', slotIndex, 'zone'],
+          );
+        }
+        return;
+      }
+      const house = housesById.get(slot.start.house);
+      if (house === undefined) {
+        return;
+      }
+      if (!data.parameters.houseZones.includes(slot.zone)) {
+        issue(
+          `starting house "${house.id}" cannot be placed on zone "${slot.zone}"`,
+          ['map', slotIndex, 'zone'],
+        );
+      }
+      if (!house.inMvp) {
+        issue(`starting house "${house.id}" is not in the MVP`, [
+          'map',
+          slotIndex,
+          'start',
+          'house',
+        ]);
+      }
+    });
+
+    Object.keys(data.startingStocks).forEach((resource) => {
+      checkResource(resource, ['startingStocks', resource], 'starting stocks');
     });
 
     data.cards.forEach((card, cardIndex) => {

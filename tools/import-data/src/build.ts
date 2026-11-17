@@ -12,6 +12,8 @@ import {
   parseHouses,
   parseParameters,
   parseResources,
+  parseStartingMap,
+  parseStartingStocks,
   ImportDataError,
   type CardLabels,
 } from './parse';
@@ -21,11 +23,13 @@ import { gameDataSchema } from './schemas';
 export const SOURCE_FILES = [
   'batiments.csv',
   'besoins_maisons.csv',
+  'carte_depart.csv',
   'cartes.csv',
   'expeditions.csv',
   'maisons.csv',
   'parametres.csv',
   'ressources.csv',
+  'stocks_depart.csv',
 ] as const;
 
 export type SourceFile = (typeof SOURCE_FILES)[number];
@@ -70,6 +74,8 @@ export function buildGameData(sources: SourceBundle): BuiltGameData {
   const parameters = parseParameters(sources['parametres.csv']);
   const expeditions = parseExpeditions(sources['expeditions.csv']);
   const cards = parseCards(sources['cartes.csv']);
+  const startingMap = parseStartingMap(sources['carte_depart.csv']);
+  const startingStocks = parseStartingStocks(sources['stocks_depart.csv']);
 
   const data: GameData = {
     version: computeVersion(sources),
@@ -79,6 +85,8 @@ export function buildGameData(sources: SourceBundle): BuiltGameData {
     parameters,
     expeditions: expeditions.expeditions,
     cards: cards.cards,
+    map: startingMap,
+    startingStocks,
   };
 
   const result = gameDataSchema.safeParse(data);

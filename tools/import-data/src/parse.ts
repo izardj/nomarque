@@ -14,15 +14,20 @@ import type {
   HouseDef,
   HouseId,
   HouseNeed,
+  MapSlotDef,
   ResourceDef,
   ResourceFlow,
+  ResourceId,
   ResourceTier,
   Service,
+  StartingContent,
+  Zone,
 } from '@nomarque/data';
 import { parse } from 'csv-parse/sync';
 import {
   BUILDING_BY_LABEL,
   CARD_PHASE_BY_LABEL,
+  CEREAL_RESOURCES,
   DESTINATION_BY_LABEL,
   GOD_BY_LABEL,
   HOUSE_BY_LABEL,
@@ -52,6 +57,7 @@ function readRows(fileName: string, text: string): CsvRow[] {
     columns: true,
     skip_empty_lines: true,
     trim: true,
+    record_delimiter: ['\r\n', '\n'],
   });
   return records.map((values, index) => ({ values, line: index + 2 }));
 }
@@ -179,6 +185,7 @@ export function parseResources(text: string): ParsedResources {
       referencePrice: parseNumber(row, fileName, 'prix_ref_deben'),
       regions,
       importFrom,
+      cereal: CEREAL_RESOURCES.has(id),
     });
     labels[id] = label;
   }
@@ -353,9 +360,27 @@ export function parseHouses(
 type ParameterPath =
   (typeof PARAMETER_BY_LABEL)[keyof typeof PARAMETER_BY_LABEL];
 
+function parseZoneList(row: CsvRow, fileName: string, column: string): Zone[] {
+  const raw = requireCell(row, fileName, column);
+  const zones: Zone[] = [];
+
+  for (const part of raw.split(',')) {
+    const label = part.trim();
+    if (label === '') {
+      fail(fileName, row.line, `empty zone label in column "${column}"`);
+    }
+    for (const zone of lookup(ZONES_BY_LABEL, fileName, row, 'zone', label)) {
+      zones.push(zone);
+    }
+  }
+
+  return zones;
+}
+
 export function parseParameters(text: string): GameParameters {
   const fileName = 'parametres.csv';
   const values = new Map<ParameterPath, number>();
+  let houseZones: Zone[] | null = null;
 
   for (const row of readRows(fileName, text)) {
     const label = requireCell(row, fileName, 'parametre');
@@ -364,6 +389,10 @@ export function parseParameters(text: string): GameParameters {
     )[label];
     if (path === undefined) {
       fail(fileName, row.line, `unknown parameter label "${label}"`);
+    }
+    if (path === 'houseZones') {
+      houseZones = parseZoneList(row, fileName, 'valeur');
+      continue;
     }
     values.set(path, parseNumber(row, fileName, 'valeur'));
   }
@@ -375,6 +404,10 @@ export function parseParameters(text: string): GameParameters {
     }
     return found;
   };
+
+  if (houseZones === null) {
+    throw new ImportDataError(`${fileName}: missing parameter "houseZones"`);
+  }
 
   return {
     activityRate: value('activityRate'),
@@ -392,7 +425,95 @@ export function parseParameters(text: string): GameParameters {
     catchUpMultiplier: value('catchUpMultiplier'),
     inactivityDaysBeforeAbandon: value('inactivityDaysBeforeAbandon'),
     registrationClosesAfterYear: value('registrationClosesAfterYear'),
+    baseStorage: value('baseStorage'),
+    granaryCapacity: value('granaryCapacity'),
+    housesPerBlock: value('housesPerBlock'),
+    houseBlockCost: { deben: value('houseBlockCost.deben') },
+    houseBlockBuildHours: value('houseBlockBuildHours'),
+    houseZones,
+    startingDeben: value('startingDeben'),
   };
+}
+
+function parseSlotZone(row: CsvRow, fileName: string, label: string): Zone {
+  const zones = lookup(ZONES_BY_LABEL, fileName, row, 'zone', label);
+  if (zones.length !== 1) {
+    fail(
+      fileName,
+      row.line,
+      `zone label "${label}" must map to exactly one zone`,
+    );
+  }
+  return zones[0];
+}
+
+function parseStartingContent(
+  row: CsvRow,
+  fileName: string,
+  raw: string,
+): StartingContent | null {
+  if (raw === '') {
+    return null;
+  }
+  if (Object.prototype.hasOwnProperty.call(BUILDING_BY_LABEL, raw)) {
+    return {
+      kind: 'building',
+      building: lookup(BUILDING_BY_LABEL, fileName, row, 'building', raw).id,
+    };
+  }
+  if (Object.prototype.hasOwnProperty.call(HOUSE_BY_LABEL, raw)) {
+    return {
+      kind: 'houses',
+      house: lookup(HOUSE_BY_LABEL, fileName, row, 'house', raw),
+    };
+  }
+  fail(
+    fileName,
+    row.line,
+    `unknown building or house label "${raw}" in column "contenu"`,
+  );
+}
+
+export function parseStartingMap(text: string): MapSlotDef[] {
+  const fileName = 'carte_depart.csv';
+  const slots: MapSlotDef[] = [];
+
+  for (const row of readRows(fileName, text)) {
+    slots.push({
+      slot: parseNumber(row, fileName, 'emplacement'),
+      row: parseNumber(row, fileName, 'ligne'),
+      col: parseNumber(row, fileName, 'colonne'),
+      zone: parseSlotZone(row, fileName, requireCell(row, fileName, 'zone')),
+      start: parseStartingContent(row, fileName, row.values['contenu'] ?? ''),
+    });
+  }
+
+  return slots.sort((left, right) => left.slot - right.slot);
+}
+
+export function parseStartingStocks(
+  text: string,
+): Partial<Record<ResourceId, number>> {
+  const fileName = 'stocks_depart.csv';
+  const stocks: Partial<Record<ResourceId, number>> = {};
+  const seen = new Set<ResourceId>();
+
+  for (const row of readRows(fileName, text)) {
+    const resource = lookup(
+      RESOURCE_BY_LABEL,
+      fileName,
+      row,
+      'resource',
+      requireCell(row, fileName, 'ressource'),
+    );
+    if (seen.has(resource)) {
+      fail(fileName, row.line, `resource "${resource}" appears more than once`);
+    }
+    seen.add(resource);
+    stocks[resource] = parseNumber(row, fileName, 'quantite');
+  }
+
+  return stocks;
 }
 
 export interface ParsedExpeditions {
