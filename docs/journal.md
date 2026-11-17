@@ -30,6 +30,23 @@ Validation : un joueur se connecte par lien magique et rejoint un monde.
 | 11 | Seed : un monde et son premier règne | `feat/j0-seed` | DeepSeek | 6 |
 | 12 | Revue de chaque livraison, test de bout en bout de la validation | — | Opus | tout |
 
+## Plan — J1 · Cité solo
+
+Validation : le test de propriété d'`advance` est vert.
+
+| # | Tâche | Branche | Modèle | Dépend de |
+| --- | --- | --- | --- | --- |
+| 1 | Données provisoires (paramètres, carte et stocks de départ) et contrat de `libs/data` | `feat/j1-data-contract` | Opus | — |
+| 2 | Import des nouvelles données (carte, stocks, paramètres, céréales) | `feat/j1-import-data` | DeepSeek | 1 |
+| 3 | Calendrier du Nil : `phaseAt`, `nextBoundary` | `feat/j1-rules` | Opus | 1 |
+| 4 | État du nome, main-d'œuvre, constructions, maisons, actions pures (`build`, `assignWorkers`), cité de départ | `feat/j1-rules` | Opus | 3 |
+| 5 | `advance` et son test de propriété | `feat/j1-rules` | Opus | 4 |
+| 6 | DTO du nome, du rapport et des actions (`libs/contracts`) | `feat/j1-contracts` | Opus | 4 |
+| 7 | API du nome : pipeline d'action (verrou, `advance`, validation, écriture, `ActionLog`), `GET /nomes/me`, construire, affecter, cité de départ au `join` | `feat/j1-nome-api` | Sonnet | 5, 6 |
+| 8 | Écrans Rapport, Cité, Ouvriers et barre d'onglets | `feat/j1-web-city` | Sonnet | 6 |
+| 9 | Textes français et tests unitaires complémentaires | `chore/j1-i18n` | DeepSeek | 8 |
+| 10 | Revue de chaque livraison, test de bout en bout, captures | — | Opus | tout |
+
 ## Décisions d'architecture (J0)
 
 - **pnpm** comme gestionnaire de paquets, Nx en version courante.
@@ -85,3 +102,40 @@ Validation : un joueur se connecte par lien magique et rejoint un monde.
 5. Haute-Égypte : aucune ressource ne lui est rattachée, et l'effet chiffré d'une région n'est défini nulle part.
 6. Rouleaux : il faut des scribes pour en produire, et des maisons de niveau 3 (qui en consomment) pour avoir des scribes. Seuls les greniers royaux (J3) cassent la boucle.
 7. Villa : aucun besoin en ressources dans `besoins_maisons.csv` (hors MVP, à compléter plus tard).
+
+### 2026-11-17 — J1 · Cité solo
+
+- La PR de J0 reste ouverte ; J1 se construit sur `milestone/j1`, branchée sur `milestone/j0`.
+- Les questions ouvertes de J0 n'ont pas reçu de réponse. Opus a pris des valeurs provisoires, rangées dans les CSV et marquées « Provisoire J1 » (voir décisions).
+- Contrat de données étendu (Opus) : carte de départ, stocks de départ, paramètres de la cité, drapeau « céréale ».
+- `libs/rules` (Opus) : calendrier du Nil, main-d'œuvre, flux de ressources, `advance`, actions pures (`foundNome`, `build`, `assignWorkers`), prévisions (`forecast`). 40 tests, dont le test de propriété `advance(a→c) = advance(b→c) ∘ advance(a→b)`, vert sur 8 séries de 300 tirages.
+  - Premier contre-exemple trouvé par le test : un stock au-dessus de la capacité qui baisse était ramené à la capacité au mauvais moment. Corrigé : l'arrondi aux bornes suit le sens de variation.
+
+- Import des nouvelles données (DeepSeek) accepté sans retouche : 36 tests, `check-data` vert.
+- API du nome (Sonnet) acceptée sans retouche : pipeline unique (verrou `FOR UPDATE`, `advance`, validation par `libs/rules`, écriture, `ActionLog`), cité de départ au `join`, horloge injectable. 46 tests d'intégration ; le test de concurrence échoue bien sans le verrou.
+- Écrans Rapport, Cité, Ouvriers (Sonnet) acceptés sans retouche : 94 tests.
+- Test de bout en bout par Opus dans la pile Docker et Chromium (captures dans `docs/img/j1/`) : connexion, fondation du nome, construction d'un champ d'orge (40 deben débités, chantier « prêt dans 52 min » à la vitesse 7), prévision de récolte, rapport après 42 h d'absence (24 blés consommés, 3 deben d'impôts, les mêmes chiffres que le test unitaire).
+- Validation de J1 tenue : test de propriété vert. 220 tests au total, lint et build verts sur les 8 projets.
+- Aucune escalade.
+
+#### Décisions
+
+- **`advance` exact plutôt que par pas de 6 h.** Entre deux instants fixes du jeu, tous les débits sont constants. Quand un stock touche zéro ou sa capacité, l'intervalle est recoupé à cet instant. Le découpage ne dépend donc ni des connexions ni de la grille, et le test de propriété tient à 1e-6 près. La grille de 6 h ne sert plus qu'à juger les maisons.
+- **Pénurie** : un stock vide partage son flux entrant entre ses consommateurs au prorata de leur demande (ateliers, temple, maisons). Un atelier ou un service s'arrête en proportion de son entrée la plus rare ; une maison prend ce qu'elle peut de chaque besoin.
+- **Stockage** : capacité par ressource = stockage de base + capacité d'un grenier × occupation de chaque grenier. L'excédent est perdu en continu et noté dans le rapport.
+- **Maisons** : jugées aux points de la grille (toutes les 6 h) sur la case écoulée. Une parcelle livrée en cours de case n'est jugée qu'à partir de la case suivante.
+  - Montée : besoins du niveau couverts, services du niveau suivant à portée, et chaque ressource du niveau suivant en stock, pendant 24 h. Interprétation de « tous les besoins couverts » qui évite qu'une maison monte puis redescende aussitôt.
+  - Descente : un besoin manquant pendant 24 h donne un avertissement, pendant 48 h une descente. Jamais sous le niveau 1. Villa exclue (hors MVP).
+- **Services** : actifs dès qu'un ouvrier y travaille. Le temple doit en plus avoir reçu tout son pain sur la case. Portée = distance de Chebyshev sur la grille ≤ `portee_parcelles`. La maquette montre un temple (portée 2) qui ne couvre que les voisines immédiates : à trancher.
+- **Champs** : pendant Akhet, ils ne demandent pas d'ouvriers. Récolte à 120 h = sortie annuelle × occupation moyenne pendant Peret × multiplicateur de crue. Tribut à 166 h : 10 % des céréales (blé, orge) récoltées dans l'année, plafonné au stock.
+- **Impôts** : continus, par habitant, sans condition de besoins.
+- **Main-d'œuvre** : ouvriers disponibles d'une classe = ⌊habitants × taux d'activité⌋. Un îlot de maisons ne fournit que la classe de son niveau.
+- Constantes de la spec gardées dans `libs/rules/src/lib/calendar.ts` (phases 48/120, récolte 120, tribut 166, grille 6 h, seuils 24/48 h), comme `REIGN_YEARS`.
+- **Valeurs provisoires** (`parametres.csv`, `carte_depart.csv`, `stocks_depart.csv`) :
+  - stockage de base 200 par ressource, grenier +400 ;
+  - 3 maisons par îlot, 30 deben, 4 h de construction, sur Ville, Terre noire ou Désert ;
+  - 300 deben et 150 blés au départ ;
+  - carte 4 × 4 (une ligne par zone), cité de départ du GDD : 3 huttes, 1 puits, 1 grenier, 1 champ de blé ;
+  - même carte pour toutes les régions : l'effet des régions attend J3.
+- **Routes** : la spec écrit `/nomes/me`, mais un joueur peut avoir un nome par monde. Les routes du nome vivent donc sous `/worlds/:id/nome/…`.
+- **Rapport de l'intendant** : accumulé dans `Nome.pendingReport` depuis le dernier « C'est noté » (`POST …/report/ack`).

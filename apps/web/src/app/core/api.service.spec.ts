@@ -6,7 +6,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import type { ApiErrorDto, JoinWorldRequest } from '@nomarque/contracts';
 import { ApiService, NETWORK_ERROR_CODE } from './api.service';
-import { ME_WITH_DYNASTY } from './testing';
+import { ME_WITH_DYNASTY, NOME_STATE } from './testing';
 
 describe('ApiService', () => {
   let api: ApiService;
@@ -53,6 +53,36 @@ describe('ApiService', () => {
     const req = http.expectOne('/api/auth/me');
     expect(req.request.method).toBe('GET');
     req.flush(ME_WITH_DYNASTY);
+  });
+
+  it('reads the nome state from GET /nome/state', () => {
+    api.getNomeState('w1').subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/state');
+    expect(req.request.method).toBe('GET');
+    req.flush(NOME_STATE);
+  });
+
+  it('posts a build request to the parcel', () => {
+    api.build('w1', 5, { kind: 'building', building: 'bakery' }).subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/parcels/5/build');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ kind: 'building', building: 'bakery' });
+    req.flush(NOME_STATE);
+  });
+
+  it('posts the worker count to the parcel', () => {
+    api.assignWorkers('w1', 2, { workers: 4 }).subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/parcels/2/workers');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ workers: 4 });
+    req.flush(NOME_STATE);
+  });
+
+  it('acknowledges the report', () => {
+    api.ackReport('w1').subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/report/ack');
+    expect(req.request.method).toBe('POST');
+    req.flush(NOME_STATE);
   });
 
   it('completes on logout (204)', () => {

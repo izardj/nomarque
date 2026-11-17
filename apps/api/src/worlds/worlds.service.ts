@@ -5,30 +5,20 @@ import type {
   MyNomeResponse,
   WorldDto,
 } from '@nomarque/contracts';
-import {
-  Prisma,
-  type Dynasty,
-  type PrismaClient,
-  type Reign,
-  type World,
-} from '@nomarque/db';
-import { z } from 'zod';
+import { GAME_DATA } from '@nomarque/data';
+import { Prisma, type Dynasty, type Reign } from '@nomarque/db';
+import { foundNome } from '@nomarque/rules';
 import { apiError } from '../common/api-error';
+import { NomesRepository } from '../nomes/nomes.repository';
+import { toJson } from '../nomes/nome-rows';
 import { PrismaService } from '../prisma/prisma.service';
+import { findCurrentReign, findWorld } from './world-queries';
 import {
+  clampedReignHours,
   regionFromDto,
-  reignGameHours,
   toNomeSummaryDto,
   toWorldDto,
 } from './worlds.mapper';
-
-/** Reign statuses that make a reign "current", the highest number winning. */
-const CURRENT_REIGN_STATUSES = ['SCHEDULED', 'RUNNING', 'FUNERALS'] as const;
-
-/** Anything a query can run on: the client itself or a transaction. */
-type Db = Pick<PrismaClient, 'world' | 'reign' | 'dynasty' | 'nome'>;
-
-const uuidSchema = z.guid();
 
 function worldNotFound(): Error {
   return apiError(
@@ -46,25 +36,12 @@ function alreadyJoined(): Error {
   );
 }
 
-/** Rows of the current reign, or null. */
-function findCurrentReign(db: Db, worldId: string): Promise<Reign | null> {
-  return db.reign.findFirst({
-    where: { worldId, status: { in: [...CURRENT_REIGN_STATUSES] } },
-    orderBy: { number: 'desc' },
-  });
-}
-
-/** The world, or null for an unknown id (a malformed id is unknown too). */
-async function findWorld(db: Db, worldId: string): Promise<World | null> {
-  if (!uuidSchema.safeParse(worldId).success) {
-    return null;
-  }
-  return db.world.findUnique({ where: { id: worldId } });
-}
-
 @Injectable()
 export class WorldsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly nomes: NomesRepository,
+  ) {}
 
   /** Open worlds, sorted by name. */
   async listOpen(now: Date): Promise<WorldDto[]> {
@@ -166,20 +143,21 @@ export class WorldsService {
     const dynasty = await this.resolveDynasty(tx, playerId, reign, body);
 
     const region = regionFromDto(body.region);
+    const city = foundNome(GAME_DATA);
     const nome = await tx.nome.create({
       data: {
         reignId: reign.id,
         dynastyId: dynasty.id,
         name: body.nomeName,
         region,
-        // Starting values come from libs/data in J1.
-        deben: 0,
+        deben: city.deben,
         favor: 0,
         reputation: 0,
-        computedAt: Math.max(0, reignGameHours(reign, world, now)),
-        rulesState: {},
+        computedAt: clampedReignHours(reign, world, now),
+        rulesState: toJson(city.rules),
       },
     });
+    await this.nomes.insertCity(tx, nome.id, city);
     await tx.actionLog.create({
       data: {
         nomeId: nome.id,

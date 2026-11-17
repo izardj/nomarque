@@ -1,0 +1,99 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  margin: 4px 4px 0;
+
+  &:focus-visible {
+    outline-offset: 4px;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-limestone);
+}
+
+.away {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.tallies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+}
+
+.tally__amount {
+  font-weight: 600;
+}
+
+.tally__amount--gain {
+  color: var(--color-malachite);
+}
+
+.tally__amount--loss {
+  color: var(--color-red-ochre);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.note--good {
+  color: var(--color-malachite);
+}
+
+.note--bad {
+  color: var(--color-red-ochre);
+}
+
+.hint {
+  font-size: 13px;
+}
+
+.ack {
+  align-self: flex-start;
+}
+
+.card--empty {
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.empty__icon {
+  color: var(--color-malachite);
+}
+
+.empty__title {
+  font-family: var(--font-title);
+  font-size: 19px;
+  font-weight: 700;
+}

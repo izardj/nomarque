@@ -196,21 +196,24 @@ model NileYear {
 
 /// One city for one reign.
 model Nome {
-  id         String   @id @default(uuid()) @db.Uuid
-  reignId    String   @db.Uuid
-  dynastyId  String   @db.Uuid
-  name       String
-  region     Region
-  deben      Float
-  favor      Float    @default(0)
-  reputation Float    @default(0)
+  id            String   @id @default(uuid()) @db.Uuid
+  reignId       String   @db.Uuid
+  dynastyId     String   @db.Uuid
+  name          String
+  region        Region
+  deben         Float
+  favor         Float    @default(0)
+  reputation    Float    @default(0)
   /// Game-hour instant (since reign start) up to which production is computed.
-  computedAt Float
+  computedAt    Float
   /// Accumulators owned by libs/rules (need timers, Peret occupancy, active
   /// effects). Opaque to the database; versioned by libs/rules.
-  rulesState Json     @default("{}")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  rulesState    Json     @default("{}")
+  /// Steward's report accumulated since the player last acknowledged it
+  /// (AdvanceReport of libs/rules); null right after an acknowledgement.
+  pendingReport Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   reign           Reign           @relation(fields: [reignId], references: [id], onDelete: Cascade)
   dynasty         Dynasty         @relation(fields: [dynastyId], references: [id], onDelete: Cascade)
@@ -236,7 +239,7 @@ model Parcel {
   buildingType String?
   /// House level (1..3) when the parcel is a house block, else null.
   houseLevel   Int?
-  /// Number of houses in the block (pending game-design decision).
+  /// Number of houses in the block (parametres.csv « Maisons par îlot »).
   houseCount   Int     @default(0)
   workers      Int     @default(0)
   /// Game-hour instant at which construction ends, null when built.

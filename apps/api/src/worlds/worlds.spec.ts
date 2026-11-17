@@ -1,11 +1,11 @@
+import { GAME_DATA } from '@nomarque/data';
 import type { Reign, ReignStatus, World } from '@nomarque/db';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import {
   createTestApp,
-  freshIp,
   hasDatabase,
-  tokenFromMail,
+  login as loginAs,
   type TestApp,
 } from '../../test/test-app';
 
@@ -30,21 +30,7 @@ describe.skipIf(!hasDatabase)('worlds', () => {
     await t.app.close();
   });
 
-  async function login(email: string): Promise<string> {
-    await request(server)
-      .post('/api/auth/magic-link')
-      .set('X-Forwarded-For', freshIp())
-      .send({ email });
-    const mail = t.mailer.lastTo(email);
-    const response = await request(server)
-      .post('/api/auth/verify')
-      .set('X-Forwarded-For', freshIp())
-      .send({ token: tokenFromMail(mail!) });
-    const cookie = ([] as string[]).concat(
-      response.headers['set-cookie'] ?? [],
-    )[0];
-    return cookie!.split(';')[0]!;
-  }
+  const login = (email: string): Promise<string> => loginAs(t, email);
 
   interface WorldOptions {
     name?: string;
@@ -219,7 +205,7 @@ describe.skipIf(!hasDatabase)('worlds', () => {
       name: 'Bouto',
       region: 'delta',
       dynastyName: 'Thoutmosides',
-      deben: 0,
+      deben: GAME_DATA.parameters.startingDeben,
       favor: 0,
     });
 
@@ -230,12 +216,17 @@ describe.skipIf(!hasDatabase)('worlds', () => {
     expect(player.dynasty?.name).toBe('Thoutmosides');
     const nome = await t.prisma.client.nome.findUniqueOrThrow({
       where: { id: response.body.nome.id },
-      include: { actionLogs: true, parcels: true },
+      include: { actionLogs: true, parcels: true, stocks: true },
     });
     expect(nome.region).toBe('DELTA');
     expect(nome.reputation).toBe(0);
-    expect(nome.rulesState).toEqual({});
-    expect(nome.parcels).toHaveLength(0);
+    expect(nome.parcels).toHaveLength(GAME_DATA.map.length);
+    expect(nome.parcels.map((p) => p.slot).sort((a, b) => a - b)).toEqual(
+      GAME_DATA.map.map((slot) => slot.slot),
+    );
+    expect(nome.stocks).toHaveLength(
+      Object.keys(GAME_DATA.startingStocks).length,
+    );
     expect(nome.computedAt).toBeGreaterThan(13.9);
     expect(nome.computedAt).toBeLessThan(14.5);
     expect(nome.actionLogs).toHaveLength(1);

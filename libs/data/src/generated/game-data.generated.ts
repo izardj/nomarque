@@ -2,7 +2,7 @@
 import type { GameData } from '../lib/types';
 
 export const GAME_DATA: GameData = {
-  version: '6d38c5efc8ba',
+  version: '857f9cfbb41d',
   resources: [
     {
       id: 'wheat',
@@ -10,6 +10,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1,
       regions: ['middle_egypt'],
       importFrom: null,
+      cereal: true,
     },
     {
       id: 'barley',
@@ -17,6 +18,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1,
       regions: ['middle_egypt'],
       importFrom: null,
+      cereal: true,
     },
     {
       id: 'flax',
@@ -24,6 +26,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1.5,
       regions: ['delta'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'papyrus',
@@ -31,6 +34,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1.5,
       regions: ['delta'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'fish',
@@ -38,6 +42,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1.2,
       regions: [],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'clay',
@@ -45,6 +50,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 0.8,
       regions: [],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'limestone',
@@ -52,6 +58,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 2,
       regions: ['middle_egypt'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'bricks',
@@ -59,6 +66,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 1.5,
       regions: [],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'bread',
@@ -66,6 +74,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 2.5,
       regions: [],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'beer',
@@ -73,6 +82,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 3,
       regions: ['middle_egypt'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'pottery',
@@ -80,6 +90,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 3,
       regions: [],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'linen',
@@ -87,6 +98,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 6,
       regions: ['delta'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'scrolls',
@@ -94,6 +106,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 6,
       regions: ['delta'],
       importFrom: null,
+      cereal: false,
     },
     {
       id: 'copper',
@@ -101,6 +114,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 8,
       regions: [],
       importFrom: 'sinai',
+      cereal: false,
     },
     {
       id: 'cedar',
@@ -108,6 +122,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 10,
       regions: [],
       importFrom: 'byblos',
+      cereal: false,
     },
     {
       id: 'gold',
@@ -115,6 +130,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 20,
       regions: [],
       importFrom: 'nubia',
+      cereal: false,
     },
     {
       id: 'incense',
@@ -122,6 +138,7 @@ export const GAME_DATA: GameData = {
       referencePrice: 15,
       regions: [],
       importFrom: 'punt',
+      cereal: false,
     },
   ],
   buildings: [
@@ -612,6 +629,15 @@ export const GAME_DATA: GameData = {
     catchUpMultiplier: 1.5,
     inactivityDaysBeforeAbandon: 7,
     registrationClosesAfterYear: 3,
+    baseStorage: 200,
+    granaryCapacity: 400,
+    housesPerBlock: 3,
+    houseBlockCost: {
+      deben: 30,
+    },
+    houseBlockBuildHours: 4,
+    houseZones: ['city', 'black_land', 'desert'],
+    startingDeben: 300,
   },
   expeditions: [
     {
@@ -1247,4 +1273,133 @@ export const GAME_DATA: GameData = {
       defaultChoice: 'c',
     },
   ],
+  map: [
+    {
+      slot: 0,
+      row: 0,
+      col: 0,
+      zone: 'desert',
+      start: null,
+    },
+    {
+      slot: 1,
+      row: 0,
+      col: 1,
+      zone: 'desert',
+      start: null,
+    },
+    {
+      slot: 2,
+      row: 0,
+      col: 2,
+      zone: 'desert',
+      start: null,
+    },
+    {
+      slot: 3,
+      row: 0,
+      col: 3,
+      zone: 'desert',
+      start: null,
+    },
+    {
+      slot: 4,
+      row: 1,
+      col: 0,
+      zone: 'city',
+      start: {
+        kind: 'houses',
+        house: 'hut',
+      },
+    },
+    {
+      slot: 5,
+      row: 1,
+      col: 1,
+      zone: 'city',
+      start: {
+        kind: 'building',
+        building: 'well',
+      },
+    },
+    {
+      slot: 6,
+      row: 1,
+      col: 2,
+      zone: 'city',
+      start: {
+        kind: 'building',
+        building: 'granary',
+      },
+    },
+    {
+      slot: 7,
+      row: 1,
+      col: 3,
+      zone: 'city',
+      start: null,
+    },
+    {
+      slot: 8,
+      row: 2,
+      col: 0,
+      zone: 'black_land',
+      start: {
+        kind: 'building',
+        building: 'farm_wheat',
+      },
+    },
+    {
+      slot: 9,
+      row: 2,
+      col: 1,
+      zone: 'black_land',
+      start: null,
+    },
+    {
+      slot: 10,
+      row: 2,
+      col: 2,
+      zone: 'black_land',
+      start: null,
+    },
+    {
+      slot: 11,
+      row: 2,
+      col: 3,
+      zone: 'black_land',
+      start: null,
+    },
+    {
+      slot: 12,
+      row: 3,
+      col: 0,
+      zone: 'river',
+      start: null,
+    },
+    {
+      slot: 13,
+      row: 3,
+      col: 1,
+      zone: 'river',
+      start: null,
+    },
+    {
+      slot: 14,
+      row: 3,
+      col: 2,
+      zone: 'river',
+      start: null,
+    },
+    {
+      slot: 15,
+      row: 3,
+      col: 3,
+      zone: 'river',
+      start: null,
+    },
+  ],
+  startingStocks: {
+    wheat: 150,
+  },
 };

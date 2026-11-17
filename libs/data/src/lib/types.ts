@@ -121,6 +121,8 @@ export interface ResourceDef {
   regions: Region[];
   /** Expedition destination for imports, else null. */
   importFrom: ExpeditionDestinationId | null;
+  /** Cereals are the harvested grains the pharaoh's tribute is levied on. */
+  cereal: boolean;
 }
 
 export interface HouseNeed {
@@ -157,6 +159,18 @@ export interface GameParameters {
   catchUpMultiplier: number;
   inactivityDaysBeforeAbandon: number;
   registrationClosesAfterYear: number;
+  /** Storage capacity per resource without any granary. */
+  baseStorage: number;
+  /** Storage capacity per resource added by a fully staffed granary. */
+  granaryCapacity: number;
+  /** Houses in a block built on one parcel. */
+  housesPerBlock: number;
+  houseBlockCost: { deben: number };
+  /** Construction time of a block of houses, in game hours. */
+  houseBlockBuildHours: number;
+  /** Zones a block of houses may be built on. */
+  houseZones: Zone[];
+  startingDeben: number;
 }
 
 export type ExpeditionDestinationId = 'sinai' | 'byblos' | 'nubia' | 'punt';
@@ -198,6 +212,21 @@ export interface EventCardDef {
   defaultChoice: CardChoiceKey;
 }
 
+/** What a parcel of the starting map holds when a nome is founded. */
+export type StartingContent =
+  | { kind: 'building'; building: BuildingId }
+  | { kind: 'houses'; house: HouseId };
+
+/** One parcel of the nome map. Rows and columns drive service coverage. */
+export interface MapSlotDef {
+  slot: number;
+  row: number;
+  col: number;
+  zone: Zone;
+  /** Null when the parcel starts empty. */
+  start: StartingContent | null;
+}
+
 export interface GameData {
   /** Deterministic version: first 12 hex chars of the SHA-256 of the source CSVs. */
   version: string;
@@ -207,4 +236,8 @@ export interface GameData {
   parameters: GameParameters;
   expeditions: ExpeditionRouteDef[];
   cards: EventCardDef[];
+  /** Map of a nome, ordered by slot; slots are 0..n-1. */
+  map: MapSlotDef[];
+  /** Stocks a nome starts with; missing resources start at 0. */
+  startingStocks: Partial<Record<ResourceId, number>>;
 }

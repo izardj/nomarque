@@ -1,4 +1,9 @@
-import type { BuildingDef, GameData, ResourceId } from '@nomarque/data';
+import type {
+  BuildingDef,
+  GameData,
+  MapSlotDef,
+  ResourceId,
+} from '@nomarque/data';
 import { describe, expect, it } from 'vitest';
 import { buildGameData } from './build';
 import { gameDataSchema } from './schemas';
@@ -14,6 +19,14 @@ function findBuilding(data: GameData, id: BuildingDef['id']): BuildingDef {
     throw new Error(`missing building "${id}" in the fixture`);
   }
   return building;
+}
+
+function findSlot(data: GameData, slot: number): MapSlotDef {
+  const found = data.map.find((candidate) => candidate.slot === slot);
+  if (found === undefined) {
+    throw new Error(`missing map slot ${slot} in the fixture`);
+  }
+  return found;
 }
 
 describe('gameDataSchema', () => {
@@ -73,5 +86,54 @@ describe('gameDataSchema', () => {
     const result = gameDataSchema.safeParse(data);
 
     expect(result.success).toBe(false);
+  });
+
+  it.each<[string, (data: GameData) => void]>([
+    ['a missing map slot', (data) => data.map.splice(3, 1)],
+    ['a duplicate map slot', (data) => (findSlot(data, 1).slot = 0)],
+    [
+      'a duplicate map position',
+      (data) => {
+        findSlot(data, 1).row = findSlot(data, 0).row;
+        findSlot(data, 1).col = findSlot(data, 0).col;
+      },
+    ],
+    [
+      'a starting building on a zone it cannot use',
+      (data) => (findSlot(data, 8).zone = 'city'),
+    ],
+    [
+      'a starting house on a zone that is not allowed',
+      (data) => (findSlot(data, 4).zone = 'river'),
+    ],
+    [
+      'a starting house that is not in the MVP',
+      (data) => (findSlot(data, 4).start = { kind: 'houses', house: 'villa' }),
+    ],
+    ['a negative starting stock', (data) => (data.startingStocks.wheat = -1)],
+    [
+      'a starting stock of an unknown resource',
+      (data) => (data.startingStocks['unobtainium' as ResourceId] = 1),
+    ],
+    [
+      'a new parameter that is not positive',
+      (data) => (data.parameters.baseStorage = 0),
+    ],
+    [
+      'a negative startingDeben',
+      (data) => (data.parameters.startingDeben = -1),
+    ],
+  ])('rejects %s', (_name, mutate) => {
+    const data = validGameData();
+    mutate(data);
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
+  it('allows a zero startingDeben', () => {
+    const data = validGameData();
+    data.parameters.startingDeben = 0;
+
+    expect(gameDataSchema.safeParse(data).success).toBe(true);
   });
 });
