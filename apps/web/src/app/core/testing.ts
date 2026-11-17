@@ -131,7 +131,7 @@ export const NOME_STATE: NomeStateResponse = {
       }),
       parcel(8, 'black_land', {
         building: 'farm_wheat',
-        workers: 8,
+        workers: 4,
         occupancy: 1,
         harvest: { wheat: 200 },
       }),

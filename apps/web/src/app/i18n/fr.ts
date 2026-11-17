@@ -198,11 +198,43 @@ export const fr = {
 
   /** Worker classes: singular, then plural. */
   workerClasses: {
-    peasant: { one: 'paysan', many: 'paysans' },
-    artisan: { one: 'artisan', many: 'artisans' },
-    scribe: { one: 'scribe', many: 'scribes' },
-    priest: { one: 'prêtre', many: 'prêtres' },
-  } satisfies Record<WorkerClass, { one: string; many: string }>,
+    peasant: { one: 'paysan', many: 'paysans', title: 'Paysans' },
+    artisan: { one: 'artisan', many: 'artisans', title: 'Artisans' },
+    scribe: { one: 'scribe', many: 'scribes', title: 'Scribes' },
+    priest: { one: 'prêtre', many: 'prêtres', title: 'Prêtres' },
+  } satisfies Record<WorkerClass, { one: string; many: string; title: string }>,
+
+  workers: {
+    title: 'Ouvriers',
+    classesLabel: 'Ouvriers par classe',
+    listLabel: 'Bâtiments en service',
+    classCount: (assigned: number, available: number): string =>
+      `${numberFormat.format(assigned)} / ${numberFormat.format(available)}`,
+    free: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'libre' : 'libres'}`,
+    short: (count: number): string => `${numberFormat.format(count)} en manque`,
+    meta: (
+      workerClass: string,
+      required: number,
+      row: number,
+      col: number,
+    ): string =>
+      `${workerClass} · ${numberFormat.format(required)} requis · ligne ${row}, colonne ${col}`,
+    harvest: (amount: string, label: string): string =>
+      `≈ ${amount} ${label} à la récolte`,
+    perYear: (amount: string, label: string): string =>
+      `${amount} ${label} / an`,
+    underStaffed: (workers: number, required: number, loss: number): string =>
+      `${numberFormat.format(workers)} / ${numberFormat.format(required)} · production −${numberFormat.format(loss)} %`,
+    remove: (workerClass: string, place: string): string =>
+      `Retirer un ${workerClass} : ${place}`,
+    add: (workerClass: string, place: string): string =>
+      `Ajouter un ${workerClass} : ${place}`,
+    place: (building: string, row: number, col: number): string =>
+      `${building}, ligne ${row}, colonne ${col}`,
+    empty: "Aucun bâtiment n'est en service pour l'instant.",
+    emptyLink: 'Construire dans ta cité',
+  },
 
   city: {
     title: 'Ta cité',

@@ -1,0 +1,64 @@
+<h1 class="title">{{ t.title }}</h1>
+
+@if (loaded()) {
+<ul class="cards" [attr.aria-label]="t.classesLabel">
+  @for (card of cards(); track card.workerClass) {
+  <li class="card">
+    <div class="card__title">{{ card.title }}</div>
+    <div class="card__count">{{ card.count }}</div>
+    <div
+      class="card__status"
+      [class.card__status--free]="card.hasFree"
+      [class.card__status--short]="card.short"
+    >
+      {{ card.status }}
+    </div>
+  </li>
+  }
+</ul>
+
+@if (rows().length === 0) {
+<section class="surface empty">
+  <p>{{ t.empty }}</p>
+  <a
+    class="btn btn--secondary"
+    [routerLink]="['/worlds', worldId(), 'nome', 'cite']"
+    >{{ t.emptyLink }}</a
+  >
+</section>
+} @else {
+<ul class="rows" [attr.aria-label]="t.listLabel">
+  @for (row of rows(); track row.slot) {
+  <li class="row" [attr.aria-busy]="row.pending">
+    <div class="row__info">
+      <div class="row__name">{{ row.name }}</div>
+      <div class="row__meta">{{ row.meta }}</div>
+      @if (row.forecast) {
+      <div class="row__forecast">{{ row.forecast }}</div>
+      } @if (row.understaffed) {
+      <div class="row__alert">{{ row.understaffed }}</div>
+      }
+    </div>
+    <button
+      class="step"
+      type="button"
+      [attr.aria-label]="row.removeLabel"
+      [disabled]="row.workers <= 0"
+      (click)="step(row, -1)"
+    >
+      −
+    </button>
+    <output class="row__count" aria-live="polite">{{ row.workers }}</output>
+    <button
+      class="step"
+      type="button"
+      [attr.aria-label]="row.addLabel"
+      [disabled]="row.workers >= row.required"
+      (click)="step(row, 1)"
+    >
+      +
+    </button>
+  </li>
+  }
+</ul>
+} }

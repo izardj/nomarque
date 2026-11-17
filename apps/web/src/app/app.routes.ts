@@ -44,6 +44,11 @@ export const appRoutes: Route[] = [
         loadComponent: () =>
           import('./pages/city/city.page').then((m) => m.CityPage),
       },
+      {
+        path: 'ouvriers',
+        loadComponent: () =>
+          import('./pages/workers/workers.page').then((m) => m.WorkersPage),
+      },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'worlds' },
