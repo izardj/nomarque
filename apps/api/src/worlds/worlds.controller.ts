@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Post,
   UseGuards,
@@ -18,22 +19,26 @@ import {
 import type { AuthenticatedPlayer } from '../auth/authenticated-request';
 import { CurrentPlayer } from '../auth/current-player.decorator';
 import { SessionGuard } from '../auth/session.guard';
+import { CLOCK, type Clock } from '../common/clock';
 import { ZodBodyPipe } from '../common/zod-body.pipe';
 import { WorldsService } from './worlds.service';
 
 @Controller('worlds')
 @UseGuards(SessionGuard)
 export class WorldsController {
-  constructor(private readonly worlds: WorldsService) {}
+  constructor(
+    private readonly worlds: WorldsService,
+    @Inject(CLOCK) private readonly clock: Clock,
+  ) {}
 
   @Get()
   list(): Promise<WorldDto[]> {
-    return this.worlds.listOpen(new Date());
+    return this.worlds.listOpen(new Date(this.clock.now()));
   }
 
   @Get(':id')
   get(@Param('id') id: string): Promise<WorldDto> {
-    return this.worlds.get(id, new Date());
+    return this.worlds.get(id, new Date(this.clock.now()));
   }
 
   @Post(':id/join')
@@ -43,7 +48,7 @@ export class WorldsController {
     @Body(new ZodBodyPipe(joinWorldSchema)) body: JoinWorldRequest,
     @CurrentPlayer() player: AuthenticatedPlayer,
   ): Promise<JoinWorldResponse> {
-    return this.worlds.join(player.id, id, body, new Date());
+    return this.worlds.join(player.id, id, body, new Date(this.clock.now()));
   }
 
   @Get(':id/nome')
