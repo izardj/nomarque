@@ -1,0 +1,91 @@
+<header class="head">
+  @if (nome(); as current) {
+  <div class="head__top">
+    <div class="head__identity">
+      <div class="head__name">{{ current.name }}</div>
+      <div class="head__meta">{{ dynastyAndRegion() }}</div>
+    </div>
+    <div class="head__wealth">
+      <div>{{ deben() }}</div>
+      <div class="head__favor">{{ favor() }}</div>
+    </div>
+  </div>
+  <div class="frieze">
+    <div class="frieze__bar" aria-hidden="true">
+      @for (item of phases(); track item.phase) {
+      <div
+        class="frieze__segment frieze__segment--{{ item.phase }}"
+        [class.frieze__segment--current]="item.current"
+      ></div>
+      }
+    </div>
+    <ol class="frieze__labels">
+      @for (item of phases(); track item.phase) {
+      <li
+        [class.frieze__label--current]="item.current"
+        [attr.aria-current]="item.current ? 'true' : null"
+      >
+        {{ item.label }}
+      </li>
+      }
+    </ol>
+  </div>
+  } @else {
+  <div class="head__name">Nomarque</div>
+  }
+</header>
+
+<div class="status" aria-live="polite">
+  @if (error(); as message) {
+  <p class="message message--error">{{ message }}</p>
+  } @else if (!nome()) {
+  <p class="secondary">{{ common.loading }}</p>
+  }
+</div>
+
+<main class="screen">
+  <router-outlet />
+</main>
+
+<ng-template #icon let-paths>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    @for (d of paths; track d) {
+    <path [attr.d]="d" />
+    }
+  </svg>
+</ng-template>
+
+<nav class="tabs" [attr.aria-label]="t.navLabel">
+  @for (tab of tabs; track tab.key) { @if (tab.link; as link) {
+  <a
+    class="tab"
+    [routerLink]="link"
+    routerLinkActive="tab--on"
+    ariaCurrentWhenActive="page"
+  >
+    <ng-container *ngTemplateOutlet="icon; context: { $implicit: tab.icon }" />
+    {{ tabLabel(tab) }}
+  </a>
+  } @else {
+  <span
+    class="tab tab--soon"
+    role="link"
+    aria-disabled="true"
+    [attr.aria-label]="t.soonLabel(tabLabel(tab))"
+  >
+    <ng-container *ngTemplateOutlet="icon; context: { $implicit: tab.icon }" />
+    {{ tabLabel(tab) }}
+    <span class="tab__soon">{{ t.soon }}</span>
+  </span>
+  } }
+</nav>

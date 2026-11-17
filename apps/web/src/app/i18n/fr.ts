@@ -1,3 +1,4 @@
+import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
 import type { Region } from '@nomarque/data';
 
 const numberFormat = new Intl.NumberFormat('fr-FR');
@@ -94,14 +95,33 @@ export const fr = {
   },
 
   nome: {
-    title: 'Bienvenue, nomarque',
-    welcome:
-      'Ta cité arrive bientôt. Les ouvriers cherchent encore leurs sandales.',
-    deben: (amount: number): string => `${numberFormat.format(amount)} deben`,
-    favor: (amount: number): string => `Faveur ${numberFormat.format(amount)}`,
+    deben: (amount: number): string =>
+      `${numberFormat.format(Math.round(amount))} deben`,
+    favor: (amount: number): string =>
+      `Faveur ${numberFormat.format(Math.round(amount))}`,
     dynastyAndRegion: (dynasty: string, region: string): string =>
       `${dynasty} · ${region}`,
   },
+
+  shell: {
+    navLabel: 'Écrans du nome',
+    tabs: {
+      report: 'Rapport',
+      city: 'Cité',
+      workers: 'Ouvriers',
+      market: 'Marché',
+      nile: 'Nil',
+    },
+    soon: 'bientôt',
+    soonLabel: (tab: string): string => `${tab}, bientôt disponible`,
+    currentPhase: (phase: string): string => `Phase actuelle : ${phase}`,
+  },
+
+  phases: {
+    akhet: 'Akhet',
+    peret: 'Peret',
+    shemu: 'Shemu',
+  } satisfies Record<NilePhaseDto, string>,
 
   errors: {
     network_error:
@@ -116,5 +136,13 @@ export const fr = {
     reign_closing:
       'Le règne se termine. Les inscriptions rouvriront avec le suivant.',
     unknown: 'Quelque chose a coincé. Réessaie dans un instant.',
-  },
+    unknown_parcel: "Cette parcelle n'existe pas dans ton nome.",
+    parcel_not_empty:
+      'Cette parcelle est déjà occupée. Choisis une parcelle vide.',
+    zone_not_allowed: "Ce terrain n'accepte pas cette construction.",
+    not_enough_deben:
+      "Il te manque des deben pour cette construction. Ta bourse n'est pas encore assez ronde.",
+    no_building: "Il n'y a pas de bâtiment sur cette parcelle.",
+    invalid_workers: "Ce nombre d'ouvriers ne convient pas à ce bâtiment.",
+  } satisfies Record<NomeActionErrorCode, string> & Record<string, string>,
 } as const;
