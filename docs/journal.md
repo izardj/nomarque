@@ -111,6 +111,13 @@ Validation : le test de propriété d'`advance` est vert.
 - `libs/rules` (Opus) : calendrier du Nil, main-d'œuvre, flux de ressources, `advance`, actions pures (`foundNome`, `build`, `assignWorkers`), prévisions (`forecast`). 40 tests, dont le test de propriété `advance(a→c) = advance(b→c) ∘ advance(a→b)`, vert sur 8 séries de 300 tirages.
   - Premier contre-exemple trouvé par le test : un stock au-dessus de la capacité qui baisse était ramené à la capacité au mauvais moment. Corrigé : l'arrondi aux bornes suit le sens de variation.
 
+- Import des nouvelles données (DeepSeek) accepté sans retouche : 36 tests, `check-data` vert.
+- API du nome (Sonnet) acceptée sans retouche : pipeline unique (verrou `FOR UPDATE`, `advance`, validation par `libs/rules`, écriture, `ActionLog`), cité de départ au `join`, horloge injectable. 46 tests d'intégration ; le test de concurrence échoue bien sans le verrou.
+- Écrans Rapport, Cité, Ouvriers (Sonnet) acceptés sans retouche : 94 tests.
+- Test de bout en bout par Opus dans la pile Docker et Chromium (captures dans `docs/img/j1/`) : connexion, fondation du nome, construction d'un champ d'orge (40 deben débités, chantier « prêt dans 52 min » à la vitesse 7), prévision de récolte, rapport après 42 h d'absence (24 blés consommés, 3 deben d'impôts, les mêmes chiffres que le test unitaire).
+- Validation de J1 tenue : test de propriété vert. 220 tests au total, lint et build verts sur les 8 projets.
+- Aucune escalade.
+
 #### Décisions
 
 - **`advance` exact plutôt que par pas de 6 h.** Entre deux instants fixes du jeu, tous les débits sont constants. Quand un stock touche zéro ou sa capacité, l'intervalle est recoupé à cet instant. Le découpage ne dépend donc ni des connexions ni de la grille, et le test de propriété tient à 1e-6 près. La grille de 6 h ne sert plus qu'à juger les maisons.
