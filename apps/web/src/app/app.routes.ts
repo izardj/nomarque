@@ -39,6 +39,11 @@ export const appRoutes: Route[] = [
         loadComponent: () =>
           import('./pages/report/report.page').then((m) => m.ReportPage),
       },
+      {
+        path: 'cite',
+        loadComponent: () =>
+          import('./pages/city/city.page').then((m) => m.CityPage),
+      },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'worlds' },

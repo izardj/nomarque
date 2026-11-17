@@ -30,10 +30,11 @@ export class NomeStore {
   private readonly inFlight = signal(0);
   private readonly drafts = signal<Readonly<Record<number, number>>>({});
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
-  private worldId: string | null = null;
+  private readonly worldIdSignal = signal<string | null>(null);
   /** Actions run one after the other so answers never arrive out of order. */
   private queue: Promise<unknown> = Promise.resolve();
 
+  readonly worldId = this.worldIdSignal.asReadonly();
   readonly state = this.stateSignal.asReadonly();
   readonly nome = computed(() => this.stateSignal()?.nome ?? null);
   readonly report = computed(() => this.stateSignal()?.report ?? null);
@@ -59,11 +60,11 @@ export class NomeStore {
 
   /** Loads the nome of a world, forgetting the one of another world. */
   load(worldId: string): Promise<boolean> {
-    if (this.worldId !== worldId) {
+    if (this.worldIdSignal() !== worldId) {
       this.stateSignal.set(null);
       this.drafts.set({});
     }
-    this.worldId = worldId;
+    this.worldIdSignal.set(worldId);
     return this.run((id) => this.api.getNomeState(id));
   }
 
@@ -111,7 +112,7 @@ export class NomeStore {
   private run(
     call: (worldId: string) => Observable<NomeStateResponse>,
   ): Promise<boolean> {
-    const worldId = this.worldId;
+    const worldId = this.worldIdSignal();
     if (worldId === null) {
       return Promise.resolve(false);
     }

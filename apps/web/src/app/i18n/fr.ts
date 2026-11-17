@@ -1,5 +1,12 @@
 import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
-import type { Region, ResourceId } from '@nomarque/data';
+import type {
+  BuildingKind,
+  Region,
+  ResourceId,
+  Service,
+  WorkerClass,
+  Zone,
+} from '@nomarque/data';
 
 const numberFormat = new Intl.NumberFormat('fr-FR');
 
@@ -172,6 +179,82 @@ export const fr = {
     houseWarning: (name: string): string =>
       `Attention : ${name} manque d'un service et risque de redescendre.`,
     unknownParcel: 'une parcelle',
+  },
+
+  zones: {
+    desert: 'Désert',
+    city: 'Ville',
+    black_land: 'Terre noire',
+    river: 'Fleuve',
+  } satisfies Record<Zone, string>,
+
+  services: {
+    water: 'eau',
+    temple: 'culte',
+    school: 'école',
+    market: 'marché',
+    entertainment: 'divertissements',
+  } satisfies Record<Service, string>,
+
+  /** Worker classes: singular, then plural. */
+  workerClasses: {
+    peasant: { one: 'paysan', many: 'paysans' },
+    artisan: { one: 'artisan', many: 'artisans' },
+    scribe: { one: 'scribe', many: 'scribes' },
+    priest: { one: 'prêtre', many: 'prêtres' },
+  } satisfies Record<WorkerClass, { one: string; many: string }>,
+
+  city: {
+    title: 'Ta cité',
+    gridLabel: 'Parcelles de ta cité',
+    parcels: (built: number, total: number): string =>
+      `${numberFormat.format(built)} ${built < 2 ? 'parcelle' : 'parcelles'} sur ${numberFormat.format(total)}`,
+    build: '+ Construire',
+    emptyTileLabel: (zone: string): string =>
+      `Parcelle vide, ${zone} : construire`,
+    houses: (count: number, level: number): string =>
+      `×${count} · niv. ${level}`,
+    site: (remaining: string): string => `Chantier · prêt dans ${remaining}`,
+    siteSoon: 'Chantier · bientôt prêt',
+    inRange: 'dans la portée',
+    legendRange: (building: string): string => `Portée : ${building}`,
+    kinds: {
+      field: 'récolte',
+      raw: 'production',
+      workshop: 'atelier',
+      service: 'service',
+      storage: 'stockage',
+      port: 'expéditions',
+    } satisfies Record<BuildingKind, string>,
+    close: 'Fermer',
+    zone: (zone: string): string => `Terrain : ${zone}`,
+    workers: (
+      assigned: number,
+      required: number,
+      workerClass: string,
+    ): string => `${assigned} / ${required} ${workerClass}`,
+    produces: (resources: string): string => `Produit : ${resources}.`,
+    storage: 'Augmente la place dans tes greniers.',
+    port: 'Ouvre les expéditions et le commerce.',
+    service: (service: string, range: number): string =>
+      `Service : ${service}. Il couvre les parcelles à ${numberFormat.format(range)} ${range < 2 ? 'case' : 'cases'} ou moins, diagonales comprises.`,
+    manageWorkers: 'Gérer les ouvriers',
+    siteDetail: (remaining: string): string =>
+      `En chantier, prêt dans ${remaining}.`,
+    siteDetailSoon: 'En chantier, bientôt prêt.',
+    houseLevel: (level: number, house: string): string =>
+      `Niveau ${level} · ${house}`,
+    emptyTitle: 'Parcelle vide',
+    choose: 'Que veux-tu construire ici ?',
+    nothingAllowed: 'Rien ne peut être construit sur ce terrain.',
+    houseBlock: 'Îlot de maisons',
+    houseBlockDetail: (count: number, house: string): string =>
+      `${count} ${house}`,
+    cost: (deben: number, hours: number): string =>
+      `${numberFormat.format(deben)} deben · ${numberFormat.format(hours)} h`,
+    notEnoughDeben: 'Pas assez de deben',
+    confirm: 'Construire',
+    confirmChoice: (name: string): string => `Construire : ${name}`,
   },
 
   errors: {

@@ -100,3 +100,19 @@ export function agree(
   const pluralMark = count > 1 ? 's' : '';
   return `${participle}${feminine}${pluralMark}`;
 }
+
+/** "2 h 10", "45 min": the time left before an instant; null once past. */
+export function formatRemaining(untilMs: number, nowMs: number): string | null {
+  const minutes = Math.ceil((untilMs - nowMs) / 60_000);
+  if (minutes <= 0) {
+    return null;
+  }
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) {
+    return `${rest} min`;
+  }
+  return rest === 0
+    ? `${hours} h`
+    : `${hours} h ${String(rest).padStart(2, '0')}`;
+}

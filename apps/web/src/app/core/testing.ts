@@ -123,7 +123,7 @@ export const NOME_STATE: NomeStateResponse = {
         occupancy: 1,
         perYear: { bread: 110 },
       }),
-      parcel(6, 'city', { building: 'temple', workers: 2, occupancy: 1 }),
+      parcel(6, 'city', { building: 'well', workers: 1, occupancy: 1 }),
       parcel(7, 'city', {
         houses: { level: 2, count: 2 },
         buildEndsAt: 111,

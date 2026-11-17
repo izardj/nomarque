@@ -1,0 +1,273 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 4px;
+}
+
+.title {
+  margin: 4px 0 0;
+}
+
+.count {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 76px;
+  padding: 4px;
+  border: 1px solid var(--tile-line, var(--color-line));
+  border-radius: 10px;
+  background: var(--tile-bg, var(--color-papyrus));
+  color: var(--tile-text, var(--color-carbon));
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.tile__title {
+  font-weight: 600;
+}
+
+.tile__sub {
+  color: var(--tile-sub, var(--color-text-secondary));
+}
+
+.tile--desert {
+  --tile-bg: var(--zone-desert);
+  --tile-line: #c9a86a;
+  --tile-sub: var(--zone-black-land);
+}
+
+.tile--city {
+  --tile-bg: var(--zone-city);
+  --tile-line: var(--color-line);
+  --tile-sub: var(--color-text-secondary);
+}
+
+.tile--black_land {
+  --tile-bg: var(--zone-black-land);
+  --tile-line: var(--zone-black-land);
+  --tile-text: var(--color-limestone);
+  --tile-sub: var(--color-limestone);
+  --range-line: var(--zone-river);
+}
+
+.tile--river {
+  --tile-bg: var(--zone-river);
+  --tile-line: #7fafc6;
+  --tile-sub: #23455a;
+}
+
+/* An empty parcel is an invitation: papyrus ground, dashed outline. */
+.tile--empty {
+  --tile-bg: var(--color-papyrus);
+  --tile-text: var(--color-text-secondary);
+  border: 1.5px dashed #8c7a5e;
+}
+
+.tile__zone {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--color-carbon);
+  border-radius: 2px;
+}
+
+.tile--empty.tile--desert .tile__zone {
+  background: var(--zone-desert);
+}
+
+.tile--empty.tile--city .tile__zone {
+  background: var(--zone-city);
+}
+
+.tile--empty.tile--black_land .tile__zone {
+  background: var(--zone-black-land);
+}
+
+.tile--empty.tile--river .tile__zone {
+  background: var(--zone-river);
+}
+
+.tile--range {
+  border: 2px dashed var(--range-line, var(--color-egyptian-blue));
+}
+
+.tile--selected {
+  border: 3px solid var(--color-egyptian-blue);
+  font-weight: 700;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0 4px;
+  list-style: none;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend__item--range {
+  font-weight: 600;
+  color: var(--color-egyptian-blue);
+}
+
+.legend__swatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--color-carbon);
+  border-radius: 2px;
+}
+
+.legend__swatch--desert {
+  background: var(--zone-desert);
+}
+
+.legend__swatch--city {
+  background: var(--zone-city);
+}
+
+.legend__swatch--black_land {
+  background: var(--zone-black-land);
+}
+
+.legend__swatch--river {
+  background: var(--zone-river);
+}
+
+.legend__dash {
+  width: 18px;
+  border-top: 2px dashed var(--color-egyptian-blue);
+}
+
+/* Detail of the selected parcel. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #d9cbae;
+  border-radius: 14px;
+  background: var(--color-limestone);
+}
+
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.panel__title {
+  font-size: 19px;
+}
+
+.panel__workers {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.panel__text {
+  font-size: 14px;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-papyrus);
+  color: var(--color-carbon);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    background: transparent;
+  }
+}
+
+.choice--on {
+  border: 3px solid var(--color-egyptian-blue);
+  padding: 8.5px 10.5px;
+}
+
+.choice__name {
+  font-weight: 600;
+}
+
+.choice__cost {
+  grid-row: 1;
+  grid-column: 2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.choice__detail {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.choice__missing {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-red-ochre);
+}
+
+.panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .btn {
+    flex: 1 1 auto;
+  }
+}

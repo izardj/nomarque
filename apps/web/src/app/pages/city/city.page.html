@@ -1,0 +1,111 @@
+<div class="head">
+  <h1 class="title">{{ t.title }}</h1>
+  @if (nome(); as current) {
+  <div class="count">{{ t.parcels(built(), current.parcels.length) }}</div>
+  }
+</div>
+
+<div class="grid" role="group" [attr.aria-label]="t.gridLabel">
+  @for (tile of tiles(); track tile.parcel.slot) {
+  <button
+    class="tile tile--{{ tile.parcel.zone }}"
+    [class.tile--empty]="tile.kind === 'empty'"
+    [class.tile--range]="tile.inRange"
+    [class.tile--selected]="tile.selected"
+    type="button"
+    [attr.aria-label]="tile.label"
+    [attr.aria-pressed]="tile.selected"
+    (click)="select(tile.parcel.slot)"
+  >
+    @if (tile.kind === 'empty') {
+    <span class="tile__zone" aria-hidden="true"></span>
+    <span class="tile__title">{{ t.build }}</span>
+    } @else {
+    <span class="tile__title">{{ tile.title }}</span>
+    <span class="tile__sub">{{ tile.sub }}</span>
+    }
+  </button>
+  }
+</div>
+
+<ul class="legend">
+  @for (item of zones; track item.zone) {
+  <li class="legend__item">
+    <span
+      class="legend__swatch legend__swatch--{{ item.zone }}"
+      aria-hidden="true"
+    ></span>
+    {{ item.label }}
+  </li>
+  } @if (rangeOf(); as building) {
+  <li class="legend__item legend__item--range">
+    <span class="legend__dash" aria-hidden="true"></span>
+    {{ t.legendRange(building) }}
+  </li>
+  }
+</ul>
+
+@if (detail(); as panel) {
+<section class="panel" aria-labelledby="panel-title">
+  <div class="panel__head">
+    <h2 id="panel-title" class="panel__title">{{ panel.title }}</h2>
+    @if (panel.workers) {
+    <div class="panel__workers">{{ panel.workers }}</div>
+    }
+  </div>
+
+  @for (line of panel.lines; track line) {
+  <p class="panel__text">{{ line }}</p>
+  } @if (panel.mode === 'empty') {
+  <p class="panel__text">{{ t.choose }}</p>
+  @if (panel.choices.length === 0) {
+  <p class="secondary">{{ t.nothingAllowed }}</p>
+  } @else {
+  <ul class="choices">
+    @for (choice of panel.choices; track choice.key) {
+    <li>
+      <button
+        class="choice"
+        type="button"
+        [class.choice--on]="chosenKey() === choice.key"
+        [attr.aria-pressed]="chosenKey() === choice.key"
+        [disabled]="!choice.affordable || busy()"
+        (click)="choose(choice)"
+      >
+        <span class="choice__name">{{ choice.name }}</span>
+        @if (choice.detail) {
+        <span class="choice__detail">{{ choice.detail }}</span>
+        }
+        <span class="choice__cost">{{ choice.cost }}</span>
+        @if (!choice.affordable) {
+        <span class="choice__missing">{{ t.notEnoughDeben }}</span>
+        }
+      </button>
+    </li>
+    }
+  </ul>
+  } }
+
+  <div class="panel__actions">
+    @if (panel.mode === 'empty' && panel.choices.length > 0) {
+    <button
+      class="btn btn--primary"
+      type="button"
+      [disabled]="chosen() === null || busy()"
+      (click)="confirm()"
+    >
+      {{ chosen() ? t.confirmChoice(chosen()!.name) : t.confirm }}
+    </button>
+    } @if (panel.mode === 'building') {
+    <a
+      class="btn btn--secondary"
+      [routerLink]="['/worlds', worldId(), 'nome', 'ouvriers']"
+      >{{ t.manageWorkers }}</a
+    >
+    }
+    <button class="btn btn--secondary" type="button" (click)="close()">
+      {{ t.close }}
+    </button>
+  </div>
+</section>
+}
