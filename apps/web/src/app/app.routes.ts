@@ -32,7 +32,14 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/nome-shell/nome-shell.page').then((m) => m.NomeShellPage),
-    children: [{ path: '', pathMatch: 'full', redirectTo: 'rapport' }],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'rapport' },
+      {
+        path: 'rapport',
+        loadComponent: () =>
+          import('./pages/report/report.page').then((m) => m.ReportPage),
+      },
+    ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'worlds' },
   { path: '**', redirectTo: 'worlds' },

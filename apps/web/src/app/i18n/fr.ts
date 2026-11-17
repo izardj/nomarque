@@ -1,5 +1,5 @@
 import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
-import type { Region } from '@nomarque/data';
+import type { Region, ResourceId } from '@nomarque/data';
 
 const numberFormat = new Intl.NumberFormat('fr-FR');
 
@@ -122,6 +122,57 @@ export const fr = {
     peret: 'Peret',
     shemu: 'Shemu',
   } satisfies Record<NilePhaseDto, string>,
+
+  /** Grammatical gender of each resource, for agreements ("perdue"). */
+  resourceGender: {
+    wheat: 'm',
+    barley: 'f',
+    flax: 'm',
+    papyrus: 'm',
+    fish: 'm',
+    clay: 'f',
+    limestone: 'm',
+    bricks: 'f',
+    bread: 'm',
+    beer: 'f',
+    pottery: 'f',
+    linen: 'm',
+    scrolls: 'm',
+    copper: 'm',
+    cedar: 'm',
+    gold: 'm',
+    incense: 'm',
+  } satisfies Record<ResourceId, 'm' | 'f'>,
+
+  report: {
+    title: 'Rapport de Méri',
+    away: (hours: number): string =>
+      `Pendant ton absence · ${numberFormat.format(hours)} ${hours < 2 ? 'heure' : 'heures'}`,
+    emptyTitle: 'Rien de neuf depuis ta dernière visite',
+    emptyText:
+      "Les ouvriers travaillent, les greniers dorment et le Nil suit son cours. Reviens tout à l'heure.",
+    ack: "C'est noté",
+    taxes: "deben d'impôts",
+    harvested: 'récolte',
+    tribute: 'tribut',
+    consumedWord: 'consommé',
+    lost: (amount: string, label: string, participle: string): string =>
+      `Grenier plein : ${amount} ${label} ${participle}.`,
+    lostWord: 'perdu',
+    lostHint: 'Pense à construire un grenier.',
+    tributeMissing: (amount: string, label: string): string =>
+      `Tribut incomplet : il a manqué ${amount} ${label}.`,
+    shortage: (amount: string, label: string): string =>
+      `Besoin non couvert : il a manqué ${amount} ${label}.`,
+    completed: (name: string): string => `Chantier terminé : ${name}.`,
+    houseUp: (name: string, level: number): string =>
+      `Maisons montées au niveau ${level} : ${name}.`,
+    houseDown: (name: string, level: number): string =>
+      `Maisons descendues au niveau ${level} : ${name}.`,
+    houseWarning: (name: string): string =>
+      `Attention : ${name} manque d'un service et risque de redescendre.`,
+    unknownParcel: 'une parcelle',
+  },
 
   errors: {
     network_error:
