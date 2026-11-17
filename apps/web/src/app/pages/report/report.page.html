@@ -1,0 +1,68 @@
+<h1 #title tabindex="-1" class="title">{{ t.title }}</h1>
+
+@if (view(); as report) { @if (report.empty) {
+<section class="card card--empty">
+  <svg
+    class="empty__icon"
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6" />
+    <path d="M6 3a2 2 0 0 0-2 2v2h4V5a2 2 0 0 0-2-2z" />
+    <path d="M10 10l2 2 4-4" />
+  </svg>
+  <p class="empty__title">{{ t.emptyTitle }}</p>
+  <p class="secondary">{{ t.emptyText }}</p>
+</section>
+} @else {
+<section class="card" aria-labelledby="away">
+  <h2 id="away" class="away">{{ report.away }}</h2>
+
+  @if (report.tallies.length > 0) {
+  <ul class="tallies">
+    @for (tally of report.tallies; track tally.key) {
+    <li>
+      <span
+        class="tally__amount"
+        [class.tally__amount--gain]="tally.gain"
+        [class.tally__amount--loss]="!tally.gain"
+        >{{ tally.amount }}</span
+      >
+      {{ tally.label }}
+    </li>
+    }
+  </ul>
+  } @if (report.notes.length > 0) {
+  <ul class="notes">
+    @for (note of report.notes; track note.key) {
+    <li
+      class="note"
+      [class.note--good]="note.tone === 'good'"
+      [class.note--bad]="note.tone === 'bad'"
+    >
+      {{ note.text }}
+    </li>
+    }
+  </ul>
+  } @if (report.storageHint) {
+  <p class="secondary hint">{{ t.lostHint }}</p>
+  }
+
+  <button
+    class="btn btn--primary ack"
+    type="button"
+    [attr.aria-busy]="busy()"
+    [disabled]="busy()"
+    (click)="acknowledge()"
+  >
+    {{ t.ack }}
+  </button>
+</section>
+} }

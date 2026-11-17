@@ -1,4 +1,12 @@
-import type { Region } from '@nomarque/data';
+import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
+import type {
+  BuildingKind,
+  Region,
+  ResourceId,
+  Service,
+  WorkerClass,
+  Zone,
+} from '@nomarque/data';
 
 const numberFormat = new Intl.NumberFormat('fr-FR');
 
@@ -94,13 +102,191 @@ export const fr = {
   },
 
   nome: {
-    title: 'Bienvenue, nomarque',
-    welcome:
-      'Ta cité arrive bientôt. Les ouvriers cherchent encore leurs sandales.',
-    deben: (amount: number): string => `${numberFormat.format(amount)} deben`,
-    favor: (amount: number): string => `Faveur ${numberFormat.format(amount)}`,
+    deben: (amount: number): string =>
+      `${numberFormat.format(Math.round(amount))} deben`,
+    favor: (amount: number): string =>
+      `Faveur ${numberFormat.format(Math.round(amount))}`,
     dynastyAndRegion: (dynasty: string, region: string): string =>
       `${dynasty} · ${region}`,
+  },
+
+  shell: {
+    navLabel: 'Écrans du nome',
+    tabs: {
+      report: 'Rapport',
+      city: 'Cité',
+      workers: 'Ouvriers',
+      market: 'Marché',
+      nile: 'Nil',
+    },
+    soon: 'bientôt',
+    soonLabel: (tab: string): string => `${tab}, bientôt disponible`,
+    currentPhase: (phase: string): string => `Phase actuelle : ${phase}`,
+  },
+
+  phases: {
+    akhet: 'Akhet',
+    peret: 'Peret',
+    shemu: 'Shemu',
+  } satisfies Record<NilePhaseDto, string>,
+
+  /** Grammatical gender of each resource, for agreements ("perdue"). */
+  resourceGender: {
+    wheat: 'm',
+    barley: 'f',
+    flax: 'm',
+    papyrus: 'm',
+    fish: 'm',
+    clay: 'f',
+    limestone: 'm',
+    bricks: 'f',
+    bread: 'm',
+    beer: 'f',
+    pottery: 'f',
+    linen: 'm',
+    scrolls: 'm',
+    copper: 'm',
+    cedar: 'm',
+    gold: 'm',
+    incense: 'm',
+  } satisfies Record<ResourceId, 'm' | 'f'>,
+
+  report: {
+    title: 'Rapport de Méri',
+    away: (hours: number): string =>
+      `Pendant ton absence · ${numberFormat.format(hours)} ${hours < 2 ? 'heure' : 'heures'}`,
+    emptyTitle: 'Rien de neuf depuis ta dernière visite',
+    emptyText:
+      "Les ouvriers travaillent, les greniers dorment et le Nil suit son cours. Reviens tout à l'heure.",
+    ack: "C'est noté",
+    taxes: "deben d'impôts",
+    harvested: 'récolte',
+    tribute: 'tribut',
+    consumedWord: 'consommé',
+    lost: (amount: string, label: string, participle: string): string =>
+      `Grenier plein : ${amount} ${label} ${participle}.`,
+    lostWord: 'perdu',
+    lostHint: 'Pense à construire un grenier.',
+    tributeMissing: (amount: string, label: string): string =>
+      `Tribut incomplet : il a manqué ${amount} ${label}.`,
+    shortage: (amount: string, label: string): string =>
+      `Besoin non couvert : il a manqué ${amount} ${label}.`,
+    completed: (name: string): string => `Chantier terminé : ${name}.`,
+    houseUp: (name: string, level: number): string =>
+      `Maisons montées au niveau ${level} : ${name}.`,
+    houseDown: (name: string, level: number): string =>
+      `Maisons descendues au niveau ${level} : ${name}.`,
+    houseWarning: (name: string): string =>
+      `Attention : ${name} manque d'un service et risque de redescendre.`,
+    unknownParcel: 'une parcelle',
+  },
+
+  zones: {
+    desert: 'Désert',
+    city: 'Ville',
+    black_land: 'Terre noire',
+    river: 'Fleuve',
+  } satisfies Record<Zone, string>,
+
+  services: {
+    water: 'eau',
+    temple: 'culte',
+    school: 'école',
+    market: 'marché',
+    entertainment: 'divertissements',
+  } satisfies Record<Service, string>,
+
+  /** Worker classes: singular, then plural. */
+  workerClasses: {
+    peasant: { one: 'paysan', many: 'paysans', title: 'Paysans' },
+    artisan: { one: 'artisan', many: 'artisans', title: 'Artisans' },
+    scribe: { one: 'scribe', many: 'scribes', title: 'Scribes' },
+    priest: { one: 'prêtre', many: 'prêtres', title: 'Prêtres' },
+  } satisfies Record<WorkerClass, { one: string; many: string; title: string }>,
+
+  workers: {
+    title: 'Ouvriers',
+    classesLabel: 'Ouvriers par classe',
+    listLabel: 'Bâtiments en service',
+    classCount: (assigned: number, available: number): string =>
+      `${numberFormat.format(assigned)} / ${numberFormat.format(available)}`,
+    free: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'libre' : 'libres'}`,
+    short: (count: number): string => `${numberFormat.format(count)} en manque`,
+    meta: (
+      workerClass: string,
+      required: number,
+      row: number,
+      col: number,
+    ): string =>
+      `${workerClass} · ${numberFormat.format(required)} requis · ligne ${row}, colonne ${col}`,
+    harvest: (amount: string, label: string): string =>
+      `≈ ${amount} ${label} à la récolte`,
+    perYear: (amount: string, label: string): string =>
+      `${amount} ${label} / an`,
+    underStaffed: (workers: number, required: number, loss: number): string =>
+      `${numberFormat.format(workers)} / ${numberFormat.format(required)} · production −${numberFormat.format(loss)} %`,
+    remove: (workerClass: string, place: string): string =>
+      `Retirer un ${workerClass} : ${place}`,
+    add: (workerClass: string, place: string): string =>
+      `Ajouter un ${workerClass} : ${place}`,
+    place: (building: string, row: number, col: number): string =>
+      `${building}, ligne ${row}, colonne ${col}`,
+    empty: "Aucun bâtiment n'est en service pour l'instant.",
+    emptyLink: 'Construire dans ta cité',
+  },
+
+  city: {
+    title: 'Ta cité',
+    gridLabel: 'Parcelles de ta cité',
+    parcels: (built: number, total: number): string =>
+      `${numberFormat.format(built)} ${built < 2 ? 'parcelle' : 'parcelles'} sur ${numberFormat.format(total)}`,
+    build: '+ Construire',
+    emptyTileLabel: (zone: string): string =>
+      `Parcelle vide, ${zone} : construire`,
+    houses: (count: number, level: number): string =>
+      `×${count} · niv. ${level}`,
+    site: (remaining: string): string => `Chantier · prêt dans ${remaining}`,
+    siteSoon: 'Chantier · bientôt prêt',
+    inRange: 'dans la portée',
+    legendRange: (building: string): string => `Portée : ${building}`,
+    kinds: {
+      field: 'récolte',
+      raw: 'production',
+      workshop: 'atelier',
+      service: 'service',
+      storage: 'stockage',
+      port: 'expéditions',
+    } satisfies Record<BuildingKind, string>,
+    close: 'Fermer',
+    zone: (zone: string): string => `Terrain : ${zone}`,
+    workers: (
+      assigned: number,
+      required: number,
+      workerClass: string,
+    ): string => `${assigned} / ${required} ${workerClass}`,
+    produces: (resources: string): string => `Produit : ${resources}.`,
+    storage: 'Augmente la place dans tes greniers.',
+    port: 'Ouvre les expéditions et le commerce.',
+    service: (service: string, range: number): string =>
+      `Service : ${service}. Il couvre les parcelles à ${numberFormat.format(range)} ${range < 2 ? 'case' : 'cases'} ou moins, diagonales comprises.`,
+    manageWorkers: 'Gérer les ouvriers',
+    siteDetail: (remaining: string): string =>
+      `En chantier, prêt dans ${remaining}.`,
+    siteDetailSoon: 'En chantier, bientôt prêt.',
+    houseLevel: (level: number, house: string): string =>
+      `Niveau ${level} · ${house}`,
+    emptyTitle: 'Parcelle vide',
+    choose: 'Que veux-tu construire ici ?',
+    nothingAllowed: 'Rien ne peut être construit sur ce terrain.',
+    houseBlock: 'Îlot de maisons',
+    houseBlockDetail: (count: number, house: string): string =>
+      `${count} ${house}`,
+    cost: (deben: number, hours: number): string =>
+      `${numberFormat.format(deben)} deben · ${numberFormat.format(hours)} h`,
+    notEnoughDeben: 'Pas assez de deben',
+    confirm: 'Construire',
+    confirmChoice: (name: string): string => `Construire : ${name}`,
   },
 
   errors: {
@@ -116,5 +302,13 @@ export const fr = {
     reign_closing:
       'Le règne se termine. Les inscriptions rouvriront avec le suivant.',
     unknown: 'Quelque chose a coincé. Réessaie dans un instant.',
-  },
+    unknown_parcel: "Cette parcelle n'existe pas dans ton nome.",
+    parcel_not_empty:
+      'Cette parcelle est déjà occupée. Choisis une parcelle vide.',
+    zone_not_allowed: "Ce terrain n'accepte pas cette construction.",
+    not_enough_deben:
+      "Il te manque des deben pour cette construction. Ta bourse n'est pas encore assez ronde.",
+    no_building: "Il n'y a pas de bâtiment sur cette parcelle.",
+    invalid_workers: "Ce nombre d'ouvriers ne convient pas à ce bâtiment.",
+  } satisfies Record<NomeActionErrorCode, string> & Record<string, string>,
 } as const;

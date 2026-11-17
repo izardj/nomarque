@@ -2,10 +2,13 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
   type ApiErrorDto,
+  type AssignWorkersRequest,
+  type BuildRequest,
   type JoinWorldRequest,
   type JoinWorldResponse,
   type MeResponse,
   type MyNomeResponse,
+  type NomeStateResponse,
   type RequestMagicLinkRequest,
   type RequestMagicLinkResponse,
   type VerifyMagicLinkRequest,
@@ -17,7 +20,7 @@ const API_PREFIX = '/api';
 
 export const NETWORK_ERROR_CODE = 'network_error';
 
-function isApiErrorDto(value: unknown): value is ApiErrorDto {
+export function isApiErrorDto(value: unknown): value is ApiErrorDto {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -112,6 +115,51 @@ export class ApiService {
         `${API_PREFIX}/worlds/${encodeURIComponent(worldId)}/nome`,
       ),
     );
+  }
+
+  getNomeState(worldId: string): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.get<NomeStateResponse>(`${this.nomeUrl(worldId)}/state`),
+    );
+  }
+
+  build(
+    worldId: string,
+    slot: number,
+    request: BuildRequest,
+  ): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/parcels/${slot}/build`,
+        request,
+      ),
+    );
+  }
+
+  assignWorkers(
+    worldId: string,
+    slot: number,
+    request: AssignWorkersRequest,
+  ): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/parcels/${slot}/workers`,
+        request,
+      ),
+    );
+  }
+
+  ackReport(worldId: string): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/report/ack`,
+        null,
+      ),
+    );
+  }
+
+  private nomeUrl(worldId: string): string {
+    return `${API_PREFIX}/worlds/${encodeURIComponent(worldId)}/nome`;
   }
 
   private guard<T>(request: Observable<T>): Observable<T> {

@@ -31,7 +31,25 @@ export const appRoutes: Route[] = [
     path: 'worlds/:id/nome',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/nome/nome.page').then((m) => m.NomePage),
+      import('./pages/nome-shell/nome-shell.page').then((m) => m.NomeShellPage),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'rapport' },
+      {
+        path: 'rapport',
+        loadComponent: () =>
+          import('./pages/report/report.page').then((m) => m.ReportPage),
+      },
+      {
+        path: 'cite',
+        loadComponent: () =>
+          import('./pages/city/city.page').then((m) => m.CityPage),
+      },
+      {
+        path: 'ouvriers',
+        loadComponent: () =>
+          import('./pages/workers/workers.page').then((m) => m.WorkersPage),
+      },
+    ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'worlds' },
   { path: '**', redirectTo: 'worlds' },
