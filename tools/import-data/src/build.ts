@@ -9,6 +9,7 @@ import {
   parseBuildings,
   parseCards,
   parseExpeditions,
+  parseGods,
   parseHouses,
   parseParameters,
   parseResources,
@@ -25,6 +26,7 @@ export const SOURCE_FILES = [
   'besoins_maisons.csv',
   'carte_depart.csv',
   'cartes.csv',
+  'dieux.csv',
   'expeditions.csv',
   'maisons.csv',
   'parametres.csv',
@@ -74,6 +76,7 @@ export function buildGameData(sources: SourceBundle): BuiltGameData {
   const parameters = parseParameters(sources['parametres.csv']);
   const expeditions = parseExpeditions(sources['expeditions.csv']);
   const cards = parseCards(sources['cartes.csv']);
+  const gods = parseGods(sources['dieux.csv']);
   const startingMap = parseStartingMap(sources['carte_depart.csv']);
   const startingStocks = parseStartingStocks(sources['stocks_depart.csv']);
 
@@ -85,6 +88,7 @@ export function buildGameData(sources: SourceBundle): BuiltGameData {
     parameters,
     expeditions: expeditions.expeditions,
     cards: cards.cards,
+    gods,
     map: startingMap,
     startingStocks,
   };
