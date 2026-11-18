@@ -296,6 +296,7 @@ function applyEvents(
       report.cardsDefaulted.push({
         drawId: card.drawId,
         cardId: card.cardId,
+        drawnAt: card.drawnAt,
         at: t,
         choice: def.defaultChoice,
       });

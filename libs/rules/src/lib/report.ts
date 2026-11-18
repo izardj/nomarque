@@ -20,6 +20,8 @@ export interface CardDealt {
 }
 
 export interface CardDefaulted extends CardDealt {
+  /** Instant the card was dealt; `at` is its expiry. */
+  drawnAt: number;
   choice: CardChoiceKey;
 }
 

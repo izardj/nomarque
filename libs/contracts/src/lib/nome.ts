@@ -103,7 +103,7 @@ export interface ModifierDto {
   endsAtIso: string;
 }
 
-export interface ReignDto {
+export interface NomeReignDto {
   /** Game hour at which the reign ends. */
   endsAt: number;
   endsAtIso: string;
@@ -135,7 +135,7 @@ export interface NomeDto {
   cards: PendingCardDto[];
   /** Ordered by start. */
   modifiers: ModifierDto[];
-  reign: ReignDto;
+  reign: NomeReignDto;
   /** Version of the game data the reign runs on. */
   dataVersion: string;
 }
@@ -171,6 +171,7 @@ export interface StewardReportDto {
   cardsDefaulted: {
     drawId: number;
     cardId: string;
+    drawnAt: number;
     at: number;
     choice: CardChoiceKey;
   }[];

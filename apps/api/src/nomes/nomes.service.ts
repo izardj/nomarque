@@ -172,7 +172,7 @@ export class NomesService {
       for (const card of advanced.report.cardsDefaulted) {
         settled.push({
           cardId: card.cardId,
-          drawnAt: card.drawId * GAME_DATA.parameters.cardDrawIntervalHours,
+          drawnAt: card.drawnAt,
           choice: card.choice,
           resolvedAt: card.at,
         });

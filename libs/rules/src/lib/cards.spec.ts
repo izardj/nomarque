@@ -82,7 +82,7 @@ describe('event cards', () => {
     const expiry = INTERVAL + P.cardGraceHours;
     const later = advance(dealt.state, INTERVAL, expiry, ctx);
     expect(later.report.cardsDefaulted).toEqual([
-      { drawId: 1, cardId: 'T1', at: expiry, choice: 'b' },
+      { drawId: 1, cardId: 'T1', drawnAt: INTERVAL, at: expiry, choice: 'b' },
     ]);
     expect(later.state.rules.cards.pending).toEqual([]);
   });
