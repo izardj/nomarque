@@ -55,6 +55,30 @@ describe('ApiService', () => {
     req.flush(ME_WITH_DYNASTY);
   });
 
+  it('posts the choice of a card to /nome/cards/:drawId/choice', () => {
+    api.chooseCard('w1', 7, { choice: 'b' }).subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/cards/7/choice');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ choice: 'b' });
+    req.flush(NOME_STATE);
+  });
+
+  it('posts an offering to /nome/offerings', () => {
+    api.makeOffering('w1', { god: 'bastet' }).subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/offerings');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ god: 'bastet' });
+    req.flush(NOME_STATE);
+  });
+
+  it('posts a crop to /nome/parcels/:slot/crop', () => {
+    api.chooseCrop('w1', 8, { crop: 'farm_flax' }).subscribe();
+    const req = http.expectOne('/api/worlds/w1/nome/parcels/8/crop');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ crop: 'farm_flax' });
+    req.flush(NOME_STATE);
+  });
+
   it('reads the nome state from GET /nome/state', () => {
     api.getNomeState('w1').subscribe();
     const req = http.expectOne('/api/worlds/w1/nome/state');

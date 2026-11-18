@@ -310,5 +310,15 @@ export const fr = {
       "Il te manque des deben pour cette construction. Ta bourse n'est pas encore assez ronde.",
     no_building: "Il n'y a pas de bâtiment sur cette parcelle.",
     invalid_workers: "Ce nombre d'ouvriers ne convient pas à ce bâtiment.",
+    not_a_field: "Cette parcelle n'est pas un champ.",
+    crops_locked:
+      "Les semailles sont faites : on ne change plus de culture avant l'Akhet.",
+    offering_too_soon:
+      'Les dieux ont déjà reçu ton offrande. Laisse-les digérer.',
+    not_enough_resources: 'Il te manque de quoi payer cette offrande.',
+    unknown_card: "Cette carte n'est plus en attente.",
+    unknown_choice: 'Cette carte ne propose pas ce choix.',
+    cannot_afford: "Tu n'as pas de quoi payer ce choix.",
+    reign_over: 'Le règne est terminé : plus rien ne peut changer.',
   } satisfies Record<NomeActionErrorCode, string> & Record<string, string>,
 } as const;
