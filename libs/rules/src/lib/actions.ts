@@ -2,13 +2,16 @@
 // `now` and returns a new state, or the reason it is refused. The server runs
 // them after advance(); the client runs them to validate before sending.
 
-import type { BuildingId, GameData } from '@nomarque/data';
+import type { BuildingId, CardChoiceKey, GameData, God } from '@nomarque/data';
+import { NILE_CALENDAR, phaseAt } from './calendar';
+import { applyChoice } from './cards';
 import { catalogOf } from './catalog';
 import {
   emptyRulesState,
   type HouseLevel,
   type NomeState,
   type ParcelState,
+  type RulesContext,
 } from './state';
 
 export type ActionError =
@@ -17,7 +20,14 @@ export type ActionError =
   | 'zone_not_allowed'
   | 'not_enough_deben'
   | 'no_building'
-  | 'invalid_workers';
+  | 'invalid_workers'
+  | 'not_a_field'
+  | 'crops_locked'
+  | 'offering_too_soon'
+  | 'not_enough_resources'
+  | 'unknown_card'
+  | 'unknown_choice'
+  | 'cannot_afford';
 
 export type ActionResult =
   { ok: true; state: NomeState } | { ok: false; error: ActionError };
@@ -54,9 +64,10 @@ export function foundNome(data: GameData): NomeState {
   });
   return {
     deben: data.parameters.startingDeben,
+    favor: 0,
     stocks: { ...data.startingStocks },
     parcels,
-    rules: emptyRulesState(),
+    rules: emptyRulesState(data),
   };
 }
 
@@ -138,6 +149,111 @@ export function assignWorkers(
     ok: true,
     state: replaceParcel(state, index, { ...parcel, workers }),
   };
+}
+
+/**
+ * Swaps the crop of a field for another field allowed on its zone. Only
+ * during Akhet: the choice is locked when Peret starts.
+ */
+export function chooseCrop(
+  state: NomeState,
+  data: GameData,
+  slot: number,
+  crop: BuildingId,
+  now: number,
+): ActionResult {
+  const catalog = catalogOf(data);
+  const index = state.parcels.findIndex((p) => p.slot === slot);
+  if (index < 0) {
+    return { ok: false, error: 'unknown_parcel' };
+  }
+  const parcel = state.parcels[index];
+  const target = catalog.building(crop);
+  if (
+    parcel.building === null ||
+    parcel.buildEndsAt !== null ||
+    catalog.building(parcel.building).kind !== 'field' ||
+    target.kind !== 'field'
+  ) {
+    return { ok: false, error: 'not_a_field' };
+  }
+  if (!target.zones.includes(catalog.slot(slot).zone)) {
+    return { ok: false, error: 'zone_not_allowed' };
+  }
+  const { hourOfYear } = phaseAt(now, data.parameters.yearHours);
+  if (hourOfYear >= NILE_CALENDAR.akhetEndsAt) {
+    return { ok: false, error: 'crops_locked' };
+  }
+  return {
+    ok: true,
+    state: replaceParcel(state, index, {
+      ...parcel,
+      building: crop,
+      workers: Math.min(parcel.workers, target.workers),
+    }),
+  };
+}
+
+/** The offering of the day to a god: its cost against its favour. */
+export function makeOffering(
+  state: NomeState,
+  data: GameData,
+  god: God,
+  now: number,
+): ActionResult {
+  const params = data.parameters;
+  const last = state.rules.lastOfferingAt;
+  if (last !== null && now - last < params.offeringIntervalHours) {
+    return { ok: false, error: 'offering_too_soon' };
+  }
+  const def = data.gods.find((g) => g.id === god);
+  if (!def) {
+    throw new Error(`unknown god ${god}`);
+  }
+  const { resource, quantity } = def.offering;
+  const stock = state.stocks[resource] ?? 0;
+  if (stock < quantity) {
+    return { ok: false, error: 'not_enough_resources' };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      stocks: { ...state.stocks, [resource]: stock - quantity },
+      rules: {
+        ...state.rules,
+        lastOfferingAt: now,
+        gods: {
+          ...state.rules.gods,
+          [god]: Math.min(
+            params.godFavorMax,
+            state.rules.gods[god] + def.favorPerOffering,
+          ),
+        },
+      },
+    },
+  };
+}
+
+/** The player's choice on a pending event card. */
+export function chooseCard(
+  state: NomeState,
+  context: RulesContext,
+  drawId: number,
+  choice: CardChoiceKey,
+  now: number,
+): ActionResult {
+  const next = JSON.parse(JSON.stringify(state)) as NomeState;
+  const error = applyChoice(
+    next,
+    drawId,
+    choice,
+    now,
+    context,
+    catalogOf(context.data),
+    true,
+  );
+  return error === null ? { ok: true, state: next } : { ok: false, error };
 }
 
 function replaceParcel(

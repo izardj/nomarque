@@ -1,17 +1,20 @@
-import { GAME_DATA } from '@nomarque/data';
+import { GAME_DATA, type GameData } from '@nomarque/data';
 import { foundNome } from './actions';
 import { advance } from './advance';
 import { forecast } from './forecast';
 
+// Without cards: a card dealt after the forecast could change the harvest.
+const DATA: GameData = { ...GAME_DATA, cards: [] };
 const context = {
-  data: GAME_DATA,
+  data: DATA,
   floods: ['good', 'good', 'good', 'good'] as const,
+  seed: 'nome',
 };
 
 describe('forecast', () => {
   it('predicts the harvest that advance then delivers', () => {
     const atPeret = advance(foundNome(GAME_DATA), 0, 60, context).state;
-    const predicted = forecast(atPeret, GAME_DATA, 60, 'good').parcels.find(
+    const predicted = forecast(atPeret, DATA, 60, 'good').parcels.find(
       (p) => p.slot === 10,
     );
     const { report } = advance(atPeret, 60, 120, context);

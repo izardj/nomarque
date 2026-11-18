@@ -1,4 +1,4 @@
-import { GAME_DATA } from '@nomarque/data';
+import { GAME_DATA, type GameData } from '@nomarque/data';
 import { advance } from './advance';
 import { assignWorkers, build, foundNome } from './actions';
 import { catalogOf } from './catalog';
@@ -6,13 +6,17 @@ import { workforce } from './economy';
 import type { NomeState, ParcelState, RulesContext } from './state';
 
 const P = GAME_DATA.parameters;
+// Event cards are covered in cards.spec.ts; here they would blur the numbers.
+const DATA: GameData = { ...GAME_DATA, cards: [] };
 const good: RulesContext = {
-  data: GAME_DATA,
+  data: DATA,
   floods: ['good', 'good', 'good', 'good'],
+  seed: 'nome',
 };
 const low: RulesContext = {
-  data: GAME_DATA,
+  data: DATA,
   floods: ['low', 'good', 'good', 'good'],
+  seed: 'nome',
 };
 
 const hut = GAME_DATA.houses[0];
@@ -102,11 +106,11 @@ describe('advance', () => {
   it('frees field workers during Akhet', () => {
     const catalog = catalogOf(GAME_DATA);
     const nome = foundNome(GAME_DATA);
-    expect(workforce(nome, catalog, 'akhet').classes.peasant.assigned).toBe(2);
-    expect(workforce(nome, catalog, 'peret').classes.peasant.assigned).toBe(
+    expect(workforce(nome, catalog, 0).classes.peasant.assigned).toBe(2);
+    expect(workforce(nome, catalog, 60).classes.peasant.assigned).toBe(
       2 + field.workers,
     );
-    expect(workforce(nome, catalog, 'peret').classes.peasant.available).toBe(
+    expect(workforce(nome, catalog, 60).classes.peasant.available).toBe(
       Math.floor(people * P.activityRate),
     );
   });
@@ -123,7 +127,7 @@ describe('advance', () => {
         buildEndsAt: null,
       });
     }
-    const work = workforce(nome, catalog, 'peret');
+    const work = workforce(nome, catalog, 60);
     const { available, assigned, ratio } = work.classes.peasant;
     expect(assigned).toBe(2 + 4 * field.workers);
     expect(ratio).toBeCloseTo(available / assigned, 12);

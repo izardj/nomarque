@@ -3,7 +3,9 @@ import {
   BUILDING_IDS,
   FLOOD_LEVELS,
   GAME_DATA,
+  GODS,
   RESOURCE_IDS,
+  type God,
   type ResourceId,
 } from '@nomarque/data';
 import { advance } from './advance';
@@ -59,8 +61,24 @@ const parcelArb = (slot: number): fc.Arbitrary<ParcelState> =>
     }),
   );
 
+const P = GAME_DATA.parameters;
+
+// Favour spread over every standing: very low, low, neutral, blessing, capped.
+const godsArb = fc.record(
+  Object.fromEntries(
+    GODS.map((g) => [
+      g,
+      fc.oneof(
+        fc.double({ min: 0, max: P.godFavorMax, noNaN: true }),
+        fc.constantFrom(0, P.godFavorMax),
+      ),
+    ]),
+  ) as Record<God, fc.Arbitrary<number>>,
+);
+
 const nomeArb: fc.Arbitrary<NomeState> = fc.record({
   deben: fc.double({ min: 0, max: 2000, noNaN: true }),
+  favor: fc.double({ min: 0, max: 120, noNaN: true }),
   stocks: fc.record(
     Object.fromEntries(
       RESOURCE_IDS.map((r) => [
@@ -70,12 +88,17 @@ const nomeArb: fc.Arbitrary<NomeState> = fc.record({
     ) as Record<ResourceId, fc.Arbitrary<number>>,
   ),
   parcels: fc.tuple(...GAME_DATA.map.map((s) => parcelArb(s.slot))),
-  rules: fc.constant(emptyRulesState()),
+  rules: godsArb.map((gods) => ({ ...emptyRulesState(GAME_DATA), gods })),
 });
 
-const contextArb: fc.Arbitrary<RulesContext> = fc
-  .array(fc.constantFrom(...FLOOD_LEVELS), { minLength: 4, maxLength: 4 })
-  .map((floods) => ({ data: GAME_DATA, floods }));
+const contextArb: fc.Arbitrary<RulesContext> = fc.record({
+  data: fc.constant(GAME_DATA),
+  floods: fc.array(fc.constantFrom(...FLOOD_LEVELS), {
+    minLength: 4,
+    maxLength: 4,
+  }),
+  seed: fc.string({ minLength: 1, maxLength: 12 }),
+});
 
 /** Three ordered instants of the reign: a ≤ b ≤ c. */
 const instantsArb = fc
@@ -174,6 +197,10 @@ describe('advance: property', () => {
             expect(quantity).toBeGreaterThanOrEqual(0);
           }
           expect(Number.isFinite(state.deben)).toBe(true);
+          for (const favor of Object.values(state.rules.gods)) {
+            expect(favor).toBeGreaterThanOrEqual(0);
+            expect(favor).toBeLessThanOrEqual(P.godFavorMax);
+          }
         },
       ),
       { numRuns: 100 },

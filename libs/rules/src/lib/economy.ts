@@ -9,7 +9,14 @@ import {
   type WorkerClass,
 } from '@nomarque/data';
 import type { Catalog } from './catalog';
-import type { NilePhase } from './calendar';
+import { phaseAt, type NilePhase } from './calendar';
+import {
+  activeModifiers,
+  adjustAvailable,
+  consumptionFactor,
+  idleFactor,
+  productionFactor,
+} from './modifiers';
 import { addAmount } from './report';
 import {
   isComplete,
@@ -34,18 +41,23 @@ export interface Workforce {
   classes: Record<WorkerClass, ClassWorkforce>;
   /** Occupancy s of each complete building, by slot: effective / required. */
   occupancy: Map<number, number>;
+  /** Game instant the workforce is computed at. */
+  at: number;
 }
 
 /**
- * Available workers per class come from the houses; when assignments of a
- * class exceed its supply, every assignment of the class is cut by the same
- * ratio. During Akhet the fields are flooded and need nobody.
+ * Available workers per class come from the houses, then card effects; when
+ * assignments of a class exceed its supply, every assignment of the class is
+ * cut by the same ratio. During Akhet the fields are flooded and need nobody.
+ * Idle effects then slow some buildings down without freeing their workers.
  */
 export function workforce(
   state: NomeState,
   catalog: Catalog,
-  phase: NilePhase,
+  at: number,
 ): Workforce {
+  const phase = phaseAt(at, catalog.data.parameters.yearHours).phase;
+  const active = activeModifiers(state, at);
   const inhabitants = Object.fromEntries(
     WORKER_CLASSES.map((c) => [c, 0]),
   ) as Record<WorkerClass, number>;
@@ -69,7 +81,11 @@ export function workforce(
   const activityRate = catalog.data.parameters.activityRate;
   const classes = Object.fromEntries(
     WORKER_CLASSES.map((c) => {
-      const available = Math.floor(inhabitants[c] * activityRate);
+      const available = adjustAvailable(
+        Math.floor(inhabitants[c] * activityRate) + state.rules.population[c],
+        c,
+        active,
+      );
       const ratio = assigned[c] > 0 ? Math.min(1, available / assigned[c]) : 1;
       return [c, { available, assigned: assigned[c], ratio }];
     }),
@@ -85,12 +101,10 @@ export function workforce(
     const effective = working
       ? parcel.workers * classes[def.workerClass].ratio
       : 0;
-    occupancy.set(
-      parcel.slot,
-      def.workers > 0 ? Math.min(1, effective / def.workers) : 1,
-    );
+    const staffed = def.workers > 0 ? Math.min(1, effective / def.workers) : 1;
+    occupancy.set(parcel.slot, staffed * idleFactor(parcel, catalog, active));
   }
-  return { classes, occupancy };
+  return { classes, occupancy, at };
 }
 
 function isWorking(
@@ -167,6 +181,7 @@ export function flows(
   capacity: number,
 ): Flows {
   const yearHours = catalog.data.parameters.yearHours;
+  const active = activeModifiers(state, work.at);
   const produced: ResourceAmounts = {};
   const consumers: Consumer[] = [];
   let taxPerHour = 0;
@@ -184,7 +199,8 @@ export function flows(
         addAmount(
           demand,
           need.resource,
-          (need.perInhabitantPerYear * people) / yearHours,
+          ((need.perInhabitantPerYear * people) / yearHours) *
+            consumptionFactor(need.resource, active),
         );
       }
       consumers.push({
@@ -206,7 +222,13 @@ export function flows(
     }
     if (def.inputs.length === 0) {
       for (const out of def.outputs) {
-        addAmount(produced, out.resource, (out.perYear / yearHours) * s);
+        addAmount(
+          produced,
+          out.resource,
+          (out.perYear / yearHours) *
+            s *
+            productionFactor(out.resource, active),
+        );
       }
       continue;
     }
@@ -216,7 +238,11 @@ export function flows(
     }
     const output: ResourceAmounts = {};
     for (const out of def.outputs) {
-      addAmount(output, out.resource, (out.perYear / yearHours) * s);
+      addAmount(
+        output,
+        out.resource,
+        (out.perYear / yearHours) * s * productionFactor(out.resource, active),
+      );
     }
     consumers.push({
       slot: parcel.slot,
