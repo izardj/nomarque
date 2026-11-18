@@ -321,7 +321,7 @@ export const FR_LABELS = {
         },
         b: {
           label: 'Refuser',
-          effect: 'dieu du temple -10',
+          effect: 'tous les dieux -2',
         },
       },
     },

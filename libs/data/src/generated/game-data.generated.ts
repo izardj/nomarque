@@ -2,7 +2,7 @@
 import type { GameData } from '../lib/types';
 
 export const GAME_DATA: GameData = {
-  version: '020dd93be8ed',
+  version: 'aca1ad8d985a',
   resources: [
     {
       id: 'wheat',
@@ -638,6 +638,26 @@ export const GAME_DATA: GameData = {
     houseBlockBuildHours: 4,
     houseZones: ['city', 'black_land', 'desert'],
     startingDeben: 300,
+    godFavorStart: 50,
+    godFavorMax: 100,
+    godFavorDecayPerHour: 0.25,
+    templeFavorPerHour: 0.1,
+    godFavorLow: 30,
+    godFavorVeryLow: 15,
+    godFavorBlessing: 70,
+    offeringIntervalHours: 24,
+    hapyLowFloodMultiplier: 0.8,
+    osirisHarvestShare: 0.1,
+    bastetUpgradeHours: 18,
+    cardDrawIntervalHours: 8,
+    cardDrawChance: 0.8,
+    cardMaxPending: 3,
+    cardGraceHours: 24,
+    cardConditionalWeight: 3,
+    cardRareWeight: 0.2,
+    royalFavorHigh: 50,
+    royalFavorPerTribute: 0.2,
+    royalFavorPerMissingTribute: 0.5,
   },
   expeditions: [
     {
@@ -725,16 +745,42 @@ export const GAME_DATA: GameData = {
     {
       id: 'C01',
       triggerRaw: 'Tutoriel (mission 3)',
+      trigger: {
+        kind: 'tutorial',
+      },
       phase: 'any',
       god: 'bastet',
       choices: [
         {
           key: 'a',
           effectRaw: 'grenier inaccessible 6 h',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'building',
+                building: 'granary',
+              },
+              percent: -100,
+              hours: 6,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'poisson -5 ; Bastet +10',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'fish',
+              amount: -5,
+            },
+            {
+              kind: 'godFavor',
+              god: 'bastet',
+              amount: 10,
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -742,20 +788,64 @@ export const GAME_DATA: GameData = {
     {
       id: 'C02',
       triggerRaw: 'Stock de blé > 200',
+      trigger: {
+        kind: 'stockAbove',
+        resource: 'wheat',
+        quantity: 200,
+      },
       phase: 'any',
       god: 'thoth',
       choices: [
         {
           key: 'a',
           effectRaw: 'scribes -1 ; blé +30',
+          effects: [
+            {
+              kind: 'population',
+              workerClass: 'scribe',
+              amount: -1,
+            },
+            {
+              kind: 'resource',
+              resource: 'wheat',
+              amount: 30,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'blé -30 ; Thot -5',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'wheat',
+              amount: -30,
+            },
+            {
+              kind: 'godFavor',
+              god: 'thoth',
+              amount: -5,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'scribes inactifs 12 h ; blé +15',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'scribe',
+              change: {
+                percent: -100,
+              },
+              hours: 12,
+            },
+            {
+              kind: 'resource',
+              resource: 'wheat',
+              amount: 15,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -763,16 +853,39 @@ export const GAME_DATA: GameData = {
     {
       id: 'C03',
       triggerRaw: 'Faveur de Bastet basse',
+      trigger: {
+        kind: 'godFavorBelow',
+        god: 'bastet',
+        level: 'low',
+      },
       phase: 'any',
       god: 'bastet',
       choices: [
         {
           key: 'a',
           effectRaw: 'deben -30 ; Bastet +5',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -30,
+            },
+            {
+              kind: 'godFavor',
+              god: 'bastet',
+              amount: 5,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'blé -10 %',
+          effects: [
+            {
+              kind: 'resourceShare',
+              resource: 'wheat',
+              percent: -10,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -780,16 +893,43 @@ export const GAME_DATA: GameData = {
     {
       id: 'C04',
       triggerRaw: 'Faveur de Sekhmet basse',
+      trigger: {
+        kind: 'godFavorBelow',
+        god: 'sekhmet',
+        level: 'low',
+      },
       phase: 'any',
       god: 'sekhmet',
       choices: [
         {
           key: 'a',
           effectRaw: 'pain -20 ; Sekhmet +10',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bread',
+              amount: -20,
+            },
+            {
+              kind: 'godFavor',
+              god: 'sekhmet',
+              amount: 10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'paysans -20 % pendant 24 h',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                percent: -20,
+              },
+              hours: 24,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -797,20 +937,54 @@ export const GAME_DATA: GameData = {
     {
       id: 'C05',
       triggerRaw: 'Aléatoire',
+      trigger: {
+        kind: 'random',
+      },
       phase: 'peret',
       god: 'osiris',
       choices: [
         {
           key: 'a',
           effectRaw: 'ouvriers des champs -50 % 12 h ; récolte protégée',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'fields',
+              },
+              percent: -50,
+              hours: 12,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'Osiris -10 ; 50 % : récolte -15 %',
+          effects: [
+            {
+              kind: 'godFavor',
+              god: 'osiris',
+              amount: -10,
+            },
+            {
+              kind: 'chance',
+              probability: 0.5,
+              effect: {
+                kind: 'harvest',
+                percent: -15,
+              },
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'récolte -20 %',
+          effects: [
+            {
+              kind: 'harvest',
+              percent: -20,
+            },
+          ],
         },
       ],
       defaultChoice: 'c',
@@ -818,16 +992,40 @@ export const GAME_DATA: GameData = {
     {
       id: 'C06',
       triggerRaw: 'Crue basse',
+      trigger: {
+        kind: 'flood',
+        level: 'low',
+      },
       phase: 'peret',
       god: 'hapy',
       choices: [
         {
           key: 'a',
           effectRaw: 'paysans -30 % 24 h ; récolte +10 %',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                percent: -30,
+              },
+              hours: 24,
+            },
+            {
+              kind: 'harvest',
+              percent: 10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'récolte -10 %',
+          effects: [
+            {
+              kind: 'harvest',
+              percent: -10,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -835,20 +1033,53 @@ export const GAME_DATA: GameData = {
     {
       id: 'C07',
       triggerRaw: 'Une fois par année',
+      trigger: {
+        kind: 'random',
+      },
       phase: 'peret',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'bière -40 ; maisons : montée de niveau accélérée 24 h',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -40,
+            },
+            {
+              kind: 'houseUpgrade',
+              mode: 'fast',
+              hours: 24,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'bière -15',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -15,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'faveur -5 ; Bastet -5',
+          effects: [
+            {
+              kind: 'royalFavor',
+              amount: -5,
+            },
+            {
+              kind: 'godFavor',
+              god: 'bastet',
+              amount: -5,
+            },
+          ],
         },
       ],
       defaultChoice: 'c',
@@ -856,20 +1087,46 @@ export const GAME_DATA: GameData = {
     {
       id: 'C08',
       triggerRaw: 'Aléatoire',
+      trigger: {
+        kind: 'random',
+      },
       phase: 'peret',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'deben -150 ; or +10',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -150,
+            },
+            {
+              kind: 'resource',
+              resource: 'gold',
+              amount: 10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'pain -30 ; deben +100',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bread',
+              amount: -30,
+            },
+            {
+              kind: 'deben',
+              amount: 100,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'c',
@@ -877,16 +1134,45 @@ export const GAME_DATA: GameData = {
     {
       id: 'C09',
       triggerRaw: 'Crue basse',
+      trigger: {
+        kind: 'flood',
+        level: 'low',
+      },
       phase: 'akhet',
       god: 'hapy',
       choices: [
         {
           key: 'a',
           effectRaw: 'conso de blé -20 % 48 h ; montée de niveau bloquée 48 h',
+          effects: [
+            {
+              kind: 'consumption',
+              resource: 'wheat',
+              percent: -20,
+              hours: 48,
+            },
+            {
+              kind: 'houseUpgrade',
+              mode: 'blocked',
+              hours: 48,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'blé -50 ; Hâpy +5',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'wheat',
+              amount: -50,
+            },
+            {
+              kind: 'godFavor',
+              god: 'hapy',
+              amount: 5,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -894,16 +1180,46 @@ export const GAME_DATA: GameData = {
     {
       id: 'C10',
       triggerRaw: 'Crue haute',
+      trigger: {
+        kind: 'flood',
+        level: 'high',
+      },
       phase: 'akhet',
       god: 'hapy',
       choices: [
         {
           key: 'a',
           effectRaw: 'briques -30 ; paysans -30 % 12 h',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bricks',
+              amount: -30,
+            },
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                percent: -30,
+              },
+              hours: 12,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'parcelles de rive inactives 24 h',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'zone',
+                zone: 'river',
+              },
+              percent: -100,
+              hours: 24,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -911,20 +1227,57 @@ export const GAME_DATA: GameData = {
     {
       id: 'C11',
       triggerRaw: "Début d'Akhet",
+      trigger: {
+        kind: 'phaseStart',
+      },
       phase: 'akhet',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'paysans -10 pendant 48 h ; faveur +20',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                count: -10,
+              },
+              hours: 48,
+            },
+            {
+              kind: 'royalFavor',
+              amount: 20,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'paysans -5 pendant 48 h ; faveur +8',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                count: -5,
+              },
+              hours: 48,
+            },
+            {
+              kind: 'royalFavor',
+              amount: 8,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'faveur -5',
+          effects: [
+            {
+              kind: 'royalFavor',
+              amount: -5,
+            },
+          ],
         },
       ],
       defaultChoice: 'c',
@@ -932,16 +1285,33 @@ export const GAME_DATA: GameData = {
     {
       id: 'C12',
       triggerRaw: 'Crue bonne',
+      trigger: {
+        kind: 'flood',
+        level: 'good',
+      },
       phase: 'shemu',
       god: 'osiris',
       choices: [
         {
           key: 'a',
           effectRaw: 'blé -20 ; Osiris +15',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'wheat',
+              amount: -20,
+            },
+            {
+              kind: 'godFavor',
+              god: 'osiris',
+              amount: 15,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'b',
@@ -949,20 +1319,58 @@ export const GAME_DATA: GameData = {
     {
       id: 'C13',
       triggerRaw: 'Avant le tribut',
+      trigger: {
+        kind: 'beforeTribute',
+      },
       phase: 'shemu',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'bière -10 ; tribut -10 %',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -10,
+            },
+            {
+              kind: 'tribute',
+              percent: -10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'tribut +5 %',
+          effects: [
+            {
+              kind: 'tribute',
+              percent: 5,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'deben -40 ; tribut -20 % ; 25 % : faveur -15',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -40,
+            },
+            {
+              kind: 'tribute',
+              percent: -20,
+            },
+            {
+              kind: 'chance',
+              probability: 0.25,
+              effect: {
+                kind: 'royalFavor',
+                amount: -15,
+              },
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -970,16 +1378,41 @@ export const GAME_DATA: GameData = {
     {
       id: 'C14',
       triggerRaw: "Champ d'orge construit",
+      trigger: {
+        kind: 'built',
+        building: 'farm_barley',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'paysans -4 pendant 6 h ; deben +20',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'peasant',
+              change: {
+                count: -4,
+              },
+              hours: 6,
+            },
+            {
+              kind: 'deben',
+              amount: 20,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'orge -15',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'barley',
+              amount: -15,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -987,16 +1420,40 @@ export const GAME_DATA: GameData = {
     {
       id: 'C15',
       triggerRaw: 'Potier construit',
+      trigger: {
+        kind: 'built',
+        building: 'potter',
+      },
       phase: 'any',
       god: 'thoth',
       choices: [
         {
           key: 'a',
           effectRaw: "deben -60 ; poterie +20 % jusqu'à la fin de l'année",
+          effects: [
+            {
+              kind: 'deben',
+              amount: -60,
+            },
+            {
+              kind: 'production',
+              resource: 'pottery',
+              percent: 20,
+              hours: 'year',
+              startsAfter: 0,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'Thot +5',
+          effects: [
+            {
+              kind: 'godFavor',
+              god: 'thoth',
+              amount: 5,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -1004,16 +1461,33 @@ export const GAME_DATA: GameData = {
     {
       id: 'C16',
       triggerRaw: '3 maisons ou plus',
+      trigger: {
+        kind: 'housesAtLeast',
+        count: 3,
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'une maison : montée de niveau bloquée 24 h',
+          effects: [
+            {
+              kind: 'houseUpgrade',
+              mode: 'blocked',
+              hours: 24,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'deben -10',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -10,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -1021,16 +1495,38 @@ export const GAME_DATA: GameData = {
     {
       id: 'C17',
       triggerRaw: 'Temple construit',
+      trigger: {
+        kind: 'built',
+        building: 'temple',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'deben -100 ; tous les dieux +5',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -100,
+            },
+            {
+              kind: 'godFavor',
+              god: 'all',
+              amount: 5,
+            },
+          ],
         },
         {
           key: 'b',
-          effectRaw: 'dieu du temple -10',
+          effectRaw: 'tous les dieux -2',
+          effects: [
+            {
+              kind: 'godFavor',
+              god: 'all',
+              amount: -2,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -1038,16 +1534,33 @@ export const GAME_DATA: GameData = {
     {
       id: 'C18',
       triggerRaw: 'Port construit',
+      trigger: {
+        kind: 'built',
+        building: 'port',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'lin tissé -10 ; cèdre +8',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'linen',
+              amount: -10,
+            },
+            {
+              kind: 'resource',
+              resource: 'cedar',
+              amount: 8,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'b',
@@ -1055,20 +1568,52 @@ export const GAME_DATA: GameData = {
     {
       id: 'C19',
       triggerRaw: 'Carrière construite',
+      trigger: {
+        kind: 'built',
+        building: 'limestone_quarry',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'deben -50',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -50,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'carrière inactive 24 h',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'building',
+                building: 'limestone_quarry',
+              },
+              percent: -100,
+              hours: 24,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: '40 % : calcaire -40',
+          effects: [
+            {
+              kind: 'chance',
+              probability: 0.4,
+              effect: {
+                kind: 'resource',
+                resource: 'limestone',
+                amount: -40,
+              },
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -1076,16 +1621,34 @@ export const GAME_DATA: GameData = {
     {
       id: 'C20',
       triggerRaw: 'École construite',
+      trigger: {
+        kind: 'built',
+        building: 'school',
+      },
       phase: 'any',
       god: 'thoth',
       choices: [
         {
           key: 'a',
           effectRaw: 'scribes +1',
+          effects: [
+            {
+              kind: 'population',
+              workerClass: 'scribe',
+              amount: 1,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'paysans +1',
+          effects: [
+            {
+              kind: 'population',
+              workerClass: 'peasant',
+              amount: 1,
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1093,16 +1656,31 @@ export const GAME_DATA: GameData = {
     {
       id: 'C21',
       triggerRaw: 'Aléatoire',
+      trigger: {
+        kind: 'random',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'pain -10 ; prochaine crue révélée 6 h en avance',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bread',
+              amount: -10,
+            },
+            {
+              kind: 'floodForecast',
+              hours: 6,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'b',
@@ -1110,16 +1688,35 @@ export const GAME_DATA: GameData = {
     {
       id: 'C22',
       triggerRaw: 'Stock de bière > 50',
+      trigger: {
+        kind: 'stockAbove',
+        resource: 'beer',
+        quantity: 50,
+      },
       phase: 'any',
       god: 'sekhmet',
       choices: [
         {
           key: 'a',
           effectRaw: 'bière -20',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -20,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'Sekhmet -10',
+          effects: [
+            {
+              kind: 'godFavor',
+              god: 'sekhmet',
+              amount: -10,
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1127,16 +1724,41 @@ export const GAME_DATA: GameData = {
     {
       id: 'C23',
       triggerRaw: 'Faveur royale élevée',
+      trigger: {
+        kind: 'royalFavorHigh',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'pain -30 ; bière -20 ; faveur +25',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bread',
+              amount: -30,
+            },
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -20,
+            },
+            {
+              kind: 'royalFavor',
+              amount: 25,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'faveur +5',
+          effects: [
+            {
+              kind: 'royalFavor',
+              amount: 5,
+            },
+          ],
         },
       ],
       defaultChoice: 'b',
@@ -1144,20 +1766,52 @@ export const GAME_DATA: GameData = {
     {
       id: 'C24',
       triggerRaw: 'Paysans occupés à 100 % depuis 48 h',
+      trigger: {
+        kind: 'busyWorkers',
+        workerClass: 'peasant',
+        hours: 48,
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'production -100 % pendant 6 h',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'all',
+              change: {
+                percent: -100,
+              },
+              hours: 6,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'bière -15',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'beer',
+              amount: -15,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'production -20 % pendant 24 h',
+          effects: [
+            {
+              kind: 'workforce',
+              workerClass: 'all',
+              change: {
+                percent: -20,
+              },
+              hours: 24,
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1165,16 +1819,38 @@ export const GAME_DATA: GameData = {
     {
       id: 'C25',
       triggerRaw: 'Port construit',
+      trigger: {
+        kind: 'built',
+        building: 'port',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'poisson -10',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'fish',
+              amount: -10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'port inactif 12 h',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'building',
+                building: 'port',
+              },
+              percent: -100,
+              hours: 12,
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1182,16 +1858,36 @@ export const GAME_DATA: GameData = {
     {
       id: 'C26',
       triggerRaw: 'Rare',
+      trigger: {
+        kind: 'rare',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'deben -20',
+          effects: [
+            {
+              kind: 'deben',
+              amount: -20,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: '50 % : pain -20',
+          effects: [
+            {
+              kind: 'chance',
+              probability: 0.5,
+              effect: {
+                kind: 'resource',
+                resource: 'bread',
+                amount: -20,
+              },
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1199,16 +1895,51 @@ export const GAME_DATA: GameData = {
     {
       id: 'C27',
       triggerRaw: 'Carrière construite',
+      trigger: {
+        kind: 'built',
+        building: 'limestone_quarry',
+      },
       phase: 'any',
       god: 'osiris',
       choices: [
         {
           key: 'a',
           effectRaw: 'carrière inactive 12 h ; Osiris +10',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'building',
+                building: 'limestone_quarry',
+              },
+              percent: -100,
+              hours: 12,
+            },
+            {
+              kind: 'godFavor',
+              god: 'osiris',
+              amount: 10,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'or +5 ; 30 % : faveur -20',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'gold',
+              amount: 5,
+            },
+            {
+              kind: 'chance',
+              probability: 0.3,
+              effect: {
+                kind: 'royalFavor',
+                amount: -20,
+              },
+            },
+          ],
         },
       ],
       defaultChoice: 'a',
@@ -1216,16 +1947,33 @@ export const GAME_DATA: GameData = {
     {
       id: 'C28',
       triggerRaw: 'Prix du pain > prix réf. × 1,4',
+      trigger: {
+        kind: 'priceAbove',
+        resource: 'bread',
+        factor: 1.4,
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'pain -30 ; deben +110',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'bread',
+              amount: -30,
+            },
+            {
+              kind: 'deben',
+              amount: 110,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'b',
@@ -1233,20 +1981,56 @@ export const GAME_DATA: GameData = {
     {
       id: 'C29',
       triggerRaw: 'Pêcherie construite',
+      trigger: {
+        kind: 'built',
+        building: 'fishery',
+      },
       phase: 'any',
       god: null,
       choices: [
         {
           key: 'a',
           effectRaw: 'pêcherie inactive 6 h, puis poisson +30 % 24 h',
+          effects: [
+            {
+              kind: 'idle',
+              target: {
+                kind: 'building',
+                building: 'fishery',
+              },
+              percent: -100,
+              hours: 6,
+            },
+            {
+              kind: 'production',
+              resource: 'fish',
+              percent: 30,
+              hours: 24,
+              startsAfter: 6,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: "deben -20 ; poisson +15 % jusqu'à la fin de l'année",
+          effects: [
+            {
+              kind: 'deben',
+              amount: -20,
+            },
+            {
+              kind: 'production',
+              resource: 'fish',
+              percent: 15,
+              hours: 'year',
+              startsAfter: 0,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'rien',
+          effects: [],
         },
       ],
       defaultChoice: 'c',
@@ -1254,23 +2038,101 @@ export const GAME_DATA: GameData = {
     {
       id: 'C30',
       triggerRaw: 'Faveur de Bastet très basse',
+      trigger: {
+        kind: 'godFavorBelow',
+        god: 'bastet',
+        level: 'veryLow',
+      },
       phase: 'any',
       god: 'bastet',
       choices: [
         {
           key: 'a',
           effectRaw: 'poisson -30 ; Bastet +25',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'fish',
+              amount: -30,
+            },
+            {
+              kind: 'godFavor',
+              god: 'bastet',
+              amount: 25,
+            },
+          ],
         },
         {
           key: 'b',
           effectRaw: 'calcaire -20 ; Bastet +15',
+          effects: [
+            {
+              kind: 'resource',
+              resource: 'limestone',
+              amount: -20,
+            },
+            {
+              kind: 'godFavor',
+              god: 'bastet',
+              amount: 15,
+            },
+          ],
         },
         {
           key: 'c',
           effectRaw: 'maisons : montée de niveau bloquée 24 h',
+          effects: [
+            {
+              kind: 'houseUpgrade',
+              mode: 'blocked',
+              hours: 24,
+            },
+          ],
         },
       ],
       defaultChoice: 'c',
+    },
+  ],
+  gods: [
+    {
+      id: 'hapy',
+      offering: {
+        resource: 'wheat',
+        quantity: 20,
+      },
+      favorPerOffering: 10,
+    },
+    {
+      id: 'osiris',
+      offering: {
+        resource: 'wheat',
+        quantity: 20,
+      },
+      favorPerOffering: 10,
+    },
+    {
+      id: 'thoth',
+      offering: {
+        resource: 'bread',
+        quantity: 10,
+      },
+      favorPerOffering: 10,
+    },
+    {
+      id: 'bastet',
+      offering: {
+        resource: 'fish',
+        quantity: 10,
+      },
+      favorPerOffering: 10,
+    },
+    {
+      id: 'sekhmet',
+      offering: {
+        resource: 'bread',
+        quantity: 10,
+      },
+      favorPerOffering: 10,
     },
   ],
   map: [
