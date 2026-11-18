@@ -1,6 +1,11 @@
-import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
+import type {
+  GodStandingDto,
+  NilePhaseDto,
+  NomeActionErrorCode,
+} from '@nomarque/contracts';
 import type {
   BuildingKind,
+  FloodLevel,
   God,
   Region,
   ResourceId,
@@ -202,7 +207,72 @@ export const fr = {
       `Méri va choisir « ${choice} » d'un instant à l'autre.`,
   },
 
+  nile: {
+    title: 'Le Nil',
+    yearAndPhase: (year: number, phase: string): string =>
+      `Année ${numberFormat.format(year)} du règne · ${phase}`,
+    flood: (level: string): string => `Crue de cette année : ${level}`,
+    nextFlood: (level: string): string =>
+      `Crue annoncée pour l'an prochain : ${level}`,
+    floods: {
+      low: 'basse',
+      good: 'bonne',
+      high: 'haute',
+    } satisfies Record<FloodLevel, string>,
+    cropsLocked: "Cultures verrouillées jusqu'à la prochaine crue.",
+    cropsOpen: (remaining: string): string =>
+      `Cultures modifiables encore ${remaining}.`,
+    cropsOpenSoon: 'Cultures modifiables, plus pour longtemps.',
+  },
+
   gods: {
+    title: 'Les dieux',
+    listLabel: 'Faveur des dieux',
+    domains: {
+      hapy: 'La crue',
+      osiris: 'Les récoltes',
+      thoth: 'Le savoir',
+      bastet: 'Le foyer',
+      sekhmet: 'La santé',
+    } satisfies Record<God, string>,
+    standings: {
+      blessing: 'Bénédiction',
+      neutral: 'Neutre',
+      low: 'Négligé',
+      veryLow: 'Courroucé',
+    } satisfies Record<GodStandingDto, string>,
+    gauge: (name: string): string => `Faveur de ${name}`,
+    gaugeValue: (value: number, max: number): string =>
+      `${numberFormat.format(Math.round(value))} sur ${numberFormat.format(max)}`,
+    thresholds: (low: number, blessing: number): string =>
+      `Négligé sous ${numberFormat.format(low)} · Bénédiction dès ${numberFormat.format(blessing)}`,
+    offer: (quantity: number, resource: string, favor: number): string =>
+      `Offrir ${numberFormat.format(quantity)} ${resource} (+${numberFormat.format(favor)})`,
+    offerFor: (label: string, god: string): string => `${label}, ${god}`,
+    offeringIn: (remaining: string): string =>
+      `Prochaine offrande dans ${remaining}`,
+    offeringSoon: 'Prochaine offrande dans un instant',
+    notEnough: (resource: string): string => `Pas assez de ${resource}`,
+    modifiersTitle: 'Effets en cours',
+    modifiersEmpty: 'Aucun effet en cours.',
+    modifierEnds: (remaining: string): string => `encore ${remaining}`,
+    modifierEndsSoon: 'bientôt fini',
+    modifierPending: 'à venir',
+    modifierFallback: 'Effet de carte',
+    modifier: {
+      workforce: (workerClass: string, change: string): string =>
+        `${workerClass} ${change}`,
+      workforceAll: (change: string): string => `Production ${change}`,
+      stopped: (who: string): string => `${who} à l'arrêt`,
+      idle: (who: string, change: string): string => `${who} ${change}`,
+      fields: 'Ouvriers des champs',
+      production: (resource: string, change: string): string =>
+        `Production de ${resource} ${change}`,
+      consumption: (resource: string, change: string): string =>
+        `Consommation de ${resource} ${change}`,
+      housesBlocked: 'Montée de niveau des maisons bloquée',
+      housesFast: 'Montée de niveau des maisons accélérée',
+    },
     names: {
       hapy: 'Hâpy',
       osiris: 'Osiris',

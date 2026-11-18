@@ -50,6 +50,11 @@ export const appRoutes: Route[] = [
           import('./pages/city/city.page').then((m) => m.CityPage),
       },
       {
+        path: 'dieux',
+        loadComponent: () =>
+          import('./pages/gods/gods.page').then((m) => m.GodsPage),
+      },
+      {
         path: 'ouvriers',
         loadComponent: () =>
           import('./pages/workers/workers.page').then((m) => m.WorkersPage),
