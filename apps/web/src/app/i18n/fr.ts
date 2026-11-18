@@ -388,6 +388,11 @@ export const fr = {
     notEnoughDeben: 'Pas assez de deben',
     confirm: 'Construire',
     confirmChoice: (name: string): string => `Construire : ${name}`,
+    cropTitle: 'Culture',
+    cropHint: 'Tu peux changer de culture tant que dure la crue.',
+    cropCurrent: 'actuelle',
+    cropLocked:
+      'Les semailles sont faites : la culture ne change plus avant la prochaine crue.',
   },
 
   errors: {

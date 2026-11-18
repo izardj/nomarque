@@ -89,7 +89,36 @@
     </li>
     }
   </ul>
-  } }
+  } } @if (panel.crops.length > 0) {
+  <section class="crops" aria-labelledby="crops-title">
+    <h3 id="crops-title" class="crops__title">{{ t.cropTitle }}</h3>
+    @if (cropsLocked()) {
+    <p class="secondary crops__locked">{{ t.cropLocked }}</p>
+    } @else {
+    <p class="secondary">{{ t.cropHint }}</p>
+    <ul class="choices">
+      @for (crop of panel.crops; track crop.building) {
+      <li>
+        <button
+          class="choice"
+          type="button"
+          [class.choice--on]="crop.current"
+          [attr.aria-pressed]="crop.current"
+          [disabled]="busy() || reignOver()"
+          (click)="changeCrop(crop)"
+        >
+          <span class="choice__name">{{ crop.name }}</span>
+          <span class="choice__detail">{{ crop.detail }}</span>
+          @if (crop.current) {
+          <span class="choice__cost">{{ t.cropCurrent }}</span>
+          }
+        </button>
+      </li>
+      }
+    </ul>
+    }
+  </section>
+  }
 
   <div class="panel__actions">
     @if (panel.mode === 'empty' && panel.choices.length > 0) {

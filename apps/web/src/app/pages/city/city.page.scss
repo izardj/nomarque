@@ -262,6 +262,19 @@
   color: var(--color-red-ochre);
 }
 
+.crops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crops__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .panel__actions {
   display: flex;
   flex-wrap: wrap;
