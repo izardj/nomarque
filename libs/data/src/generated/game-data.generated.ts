@@ -2,7 +2,7 @@
 import type { GameData } from '../lib/types';
 
 export const GAME_DATA: GameData = {
-  version: '857f9cfbb41d',
+  version: '020dd93be8ed',
   resources: [
     {
       id: 'wheat',
@@ -1304,6 +1304,13 @@ export const GAME_DATA: GameData = {
     },
     {
       slot: 4,
+      row: 0,
+      col: 4,
+      zone: 'desert',
+      start: null,
+    },
+    {
+      slot: 5,
       row: 1,
       col: 0,
       zone: 'city',
@@ -1313,7 +1320,7 @@ export const GAME_DATA: GameData = {
       },
     },
     {
-      slot: 5,
+      slot: 6,
       row: 1,
       col: 1,
       zone: 'city',
@@ -1323,7 +1330,7 @@ export const GAME_DATA: GameData = {
       },
     },
     {
-      slot: 6,
+      slot: 7,
       row: 1,
       col: 2,
       zone: 'city',
@@ -1333,14 +1340,21 @@ export const GAME_DATA: GameData = {
       },
     },
     {
-      slot: 7,
+      slot: 8,
       row: 1,
       col: 3,
       zone: 'city',
       start: null,
     },
     {
-      slot: 8,
+      slot: 9,
+      row: 1,
+      col: 4,
+      zone: 'city',
+      start: null,
+    },
+    {
+      slot: 10,
       row: 2,
       col: 0,
       zone: 'black_land',
@@ -1350,56 +1364,71 @@ export const GAME_DATA: GameData = {
       },
     },
     {
-      slot: 9,
+      slot: 11,
       row: 2,
       col: 1,
       zone: 'black_land',
       start: null,
     },
     {
-      slot: 10,
+      slot: 12,
       row: 2,
       col: 2,
       zone: 'black_land',
       start: null,
     },
     {
-      slot: 11,
+      slot: 13,
       row: 2,
       col: 3,
       zone: 'black_land',
       start: null,
     },
     {
-      slot: 12,
+      slot: 14,
+      row: 2,
+      col: 4,
+      zone: 'black_land',
+      start: null,
+    },
+    {
+      slot: 15,
       row: 3,
       col: 0,
       zone: 'river',
       start: null,
     },
     {
-      slot: 13,
+      slot: 16,
       row: 3,
       col: 1,
       zone: 'river',
       start: null,
     },
     {
-      slot: 14,
+      slot: 17,
       row: 3,
       col: 2,
       zone: 'river',
       start: null,
     },
     {
-      slot: 15,
+      slot: 18,
       row: 3,
       col: 3,
+      zone: 'river',
+      start: null,
+    },
+    {
+      slot: 19,
+      row: 3,
+      col: 4,
       zone: 'river',
       start: null,
     },
   ],
   startingStocks: {
     wheat: 150,
+    scrolls: 20,
   },
 };

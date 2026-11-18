@@ -12,7 +12,7 @@ describe('forecast', () => {
   it('predicts the harvest that advance then delivers', () => {
     const atPeret = advance(foundNome(GAME_DATA), 0, 60, context).state;
     const predicted = forecast(atPeret, GAME_DATA, 60, 'good').parcels.find(
-      (p) => p.slot === 8,
+      (p) => p.slot === 10,
     );
     const { report } = advance(atPeret, 60, 120, context);
     expect(predicted?.harvest?.wheat).toBeCloseTo(

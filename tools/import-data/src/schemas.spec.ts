@@ -100,15 +100,15 @@ describe('gameDataSchema', () => {
     ],
     [
       'a starting building on a zone it cannot use',
-      (data) => (findSlot(data, 8).zone = 'city'),
+      (data) => (findSlot(data, 10).zone = 'city'),
     ],
     [
       'a starting house on a zone that is not allowed',
-      (data) => (findSlot(data, 4).zone = 'river'),
+      (data) => (findSlot(data, 5).zone = 'river'),
     ],
     [
       'a starting house that is not in the MVP',
-      (data) => (findSlot(data, 4).start = { kind: 'houses', house: 'villa' }),
+      (data) => (findSlot(data, 5).start = { kind: 'houses', house: 'villa' }),
     ],
     ['a negative starting stock', (data) => (data.startingStocks.wheat = -1)],
     [

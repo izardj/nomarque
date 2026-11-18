@@ -59,7 +59,7 @@ describe('CityPage', () => {
     expect(text(tiles(el)[7])).toContain('Chantier · prêt dans 2 h 10');
   });
 
-  it('highlights the range of a service with Chebyshev distance', async () => {
+  it('highlights the range of a service in orthogonal steps', async () => {
     const { el, fixture } = await setupScreen(CityPage);
 
     tiles(el)[6].click();
@@ -68,7 +68,7 @@ describe('CityPage', () => {
     const inRange = tiles(el)
       .map((tile, slot) => (tile.classList.contains('tile--range') ? slot : -1))
       .filter((slot) => slot >= 0);
-    expect(inRange).toEqual([1, 2, 3, 5, 7, 9, 10, 11]);
+    expect(inRange).toEqual([2, 5, 7, 10]);
     expect(tiles(el)[6].getAttribute('aria-pressed')).toBe('true');
     expect(text(el)).toContain('Portée : Puits');
   });

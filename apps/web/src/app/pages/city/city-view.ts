@@ -61,7 +61,7 @@ export function buildingSummary(def: BuildingDef): string {
   return fr.city.kinds[def.kind];
 }
 
-/** Parcels within `range` cells of `center`, diagonals included. */
+/** Parcels within `range` orthogonal steps of `center`, diagonals excluded. */
 export function slotsInRange(
   parcels: readonly ParcelDto[],
   center: ParcelDto,
@@ -69,10 +69,8 @@ export function slotsInRange(
 ): ReadonlySet<number> {
   const slots = new Set<number>();
   for (const parcel of parcels) {
-    const distance = Math.max(
-      Math.abs(parcel.row - center.row),
-      Math.abs(parcel.col - center.col),
-    );
+    const distance =
+      Math.abs(parcel.row - center.row) + Math.abs(parcel.col - center.col);
     if (parcel.slot !== center.slot && distance <= range) {
       slots.add(parcel.slot);
     }

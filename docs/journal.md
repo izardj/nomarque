@@ -126,7 +126,7 @@ Validation : le test de propriété d'`advance` est vert.
 - **Maisons** : jugées aux points de la grille (toutes les 6 h) sur la case écoulée. Une parcelle livrée en cours de case n'est jugée qu'à partir de la case suivante.
   - Montée : besoins du niveau couverts, services du niveau suivant à portée, et chaque ressource du niveau suivant en stock, pendant 24 h. Interprétation de « tous les besoins couverts » qui évite qu'une maison monte puis redescende aussitôt.
   - Descente : un besoin manquant pendant 24 h donne un avertissement, pendant 48 h une descente. Jamais sous le niveau 1. Villa exclue (hors MVP).
-- **Services** : actifs dès qu'un ouvrier y travaille. Le temple doit en plus avoir reçu tout son pain sur la case. Portée = distance de Chebyshev sur la grille ≤ `portee_parcelles`. La maquette montre un temple (portée 2) qui ne couvre que les voisines immédiates : à trancher.
+- **Services** : actifs dès qu'un ouvrier y travaille. Le temple doit en plus avoir reçu tout son pain sur la case. Portée = distance de Chebyshev sur la grille ≤ `portee_parcelles` (remplacée en J2, voir plus bas).
 - **Champs** : pendant Akhet, ils ne demandent pas d'ouvriers. Récolte à 120 h = sortie annuelle × occupation moyenne pendant Peret × multiplicateur de crue. Tribut à 166 h : 10 % des céréales (blé, orge) récoltées dans l'année, plafonné au stock.
 - **Impôts** : continus, par habitant, sans condition de besoins.
 - **Main-d'œuvre** : ouvriers disponibles d'une classe = ⌊habitants × taux d'activité⌋. Un îlot de maisons ne fournit que la classe de son niveau.
@@ -139,3 +139,16 @@ Validation : le test de propriété d'`advance` est vert.
   - même carte pour toutes les régions : l'effet des régions attend J3.
 - **Routes** : la spec écrit `/nomes/me`, mais un joueur peut avoir un nome par monde. Les routes du nome vivent donc sous `/worlds/:id/nome/…`.
 - **Rapport de l'intendant** : accumulé dans `Nome.pendingReport` depuis le dernier « C'est noté » (`POST …/report/ack`).
+
+### 2026-11-18 — J2 · Cycle du Nil
+
+- PR de J0 et J1 toujours ouvertes ; J2 se construit sur `milestone/j2`, branchée sur `milestone/j1`.
+- Réponses du joueur au rapport de J1 : valeurs provisoires non testées (gardées), portée « le mieux possible » avec une carte plus grande, régions sans avis, rouleaux selon la recommandation d'Opus, pas de fournisseur d'e-mail pour l'instant.
+
+#### Décisions
+
+- **Carte 5 × 4 = 20 parcelles**, le maximum du GDD (« 12 à 20 parcelles »). La cité simulée de `batiments.csv` (`nombre_simu`) compte 28 bâtiments et 7 îlots : elle ne tient pas sur la carte, ce qui garde la tension « une maison sur la terre noire n'est plus un champ ».
+- **Portée en pas orthogonaux** : une portée de 1 couvre la parcelle et ses quatre voisines (« sa parcelle et les parcelles voisines » du GDD), sans les diagonales. Le temple (portée 2) couvre un losange de 13 parcelles au lieu de toute la carte.
+- **Rouleaux** : 20 rouleaux au départ (`stocks_depart.csv`) amorcent la boucle scribes ↔ maisons de niveau 3 avant les greniers royaux de J3.
+- **E-mail** : le mailer de dev (lien dans les journaux de l'API) reste le seul transport.
+- **Régions** : toujours sans effet ; Opus proposera des valeurs chiffrées au début de J3.

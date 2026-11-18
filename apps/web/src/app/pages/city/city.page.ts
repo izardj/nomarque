@@ -66,6 +66,9 @@ export class CityPage {
       ? []
       : buildTiles(nome, this.selectedSlot(), this.clock.now());
   });
+  protected readonly columns = computed(
+    () => 1 + Math.max(0, ...(this.nome()?.parcels.map((p) => p.col) ?? [])),
+  );
   protected readonly built = computed(
     () => this.tiles().filter((tile) => tile.kind !== 'empty').length,
   );

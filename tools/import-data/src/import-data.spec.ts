@@ -68,13 +68,13 @@ describe('real data import', () => {
   });
 
   it('imports the starting map, stocks, house zones and cereals', () => {
-    expect(data.map.map((slot) => slot.slot)).toEqual([...Array(16).keys()]);
-    expect(data.map[4].start).toEqual({ kind: 'houses', house: 'hut' });
-    expect(data.map[8].start).toEqual({
+    expect(data.map.map((slot) => slot.slot)).toEqual([...Array(20).keys()]);
+    expect(data.map[5].start).toEqual({ kind: 'houses', house: 'hut' });
+    expect(data.map[10].start).toEqual({
       kind: 'building',
       building: 'farm_wheat',
     });
-    expect(data.startingStocks).toEqual({ wheat: 150 });
+    expect(data.startingStocks).toEqual({ wheat: 150, scrolls: 20 });
     expect(data.parameters.houseZones).toEqual([
       'city',
       'black_land',
