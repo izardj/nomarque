@@ -184,8 +184,12 @@ p {
   }
 }
 
-.btn:disabled {
-  opacity: 0.6;
+/* Explicit colours rather than opacity: the label keeps a 7:1 contrast. */
+.btn:disabled,
+.btn:disabled:hover {
+  background: var(--color-limestone);
+  border-color: var(--color-line);
+  color: var(--color-text-secondary);
   cursor: default;
 }
 

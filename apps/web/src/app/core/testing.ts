@@ -79,7 +79,7 @@ export const BUSY_REPORT: StewardReportDto = {
   houseWarnings: [{ slot: 4, at: 108 }],
   royalFavor: -3,
   cardsDealt: [{ drawId: 7, cardId: 'C01', at: 104 }],
-  cardsDefaulted: [{ drawId: 6, cardId: 'C02', at: 102, choice: 'a' }],
+  cardsDefaulted: [{ drawId: 6, cardId: 'C02', drawnAt: 48, at: 102, choice: 'a' }],
 };
 
 /** A card waiting for an answer, expiring 22 hours after the test instant. */
