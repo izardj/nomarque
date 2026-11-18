@@ -8,11 +8,14 @@ import type {
 import { GAME_DATA } from '@nomarque/data';
 import { Prisma, type Dynasty, type Reign } from '@nomarque/db';
 import { foundNome } from '@nomarque/rules';
+import {
+  findCurrentReign,
+  findWorld,
+  NomesRepository,
+  toJson,
+} from '@nomarque/nome-store';
 import { apiError } from '../common/api-error';
-import { NomesRepository } from '../nomes/nomes.repository';
-import { toJson } from '../nomes/nome-rows';
 import { PrismaService } from '../prisma/prisma.service';
-import { findCurrentReign, findWorld } from './world-queries';
 import {
   clampedReignHours,
   regionFromDto,

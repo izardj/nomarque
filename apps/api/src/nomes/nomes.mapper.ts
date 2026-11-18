@@ -23,7 +23,7 @@ import {
   type NomeState,
 } from '@nomarque/rules';
 import { regionToDto } from '../worlds/worlds.mapper';
-import type { NomeContext } from './nomes.repository';
+import type { NomeContext } from '@nomarque/nome-store';
 
 export interface NomeView {
   nome: NomeContext;

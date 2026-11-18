@@ -15,7 +15,7 @@ import {
   type ResourceAmounts,
   type RulesState,
 } from '@nomarque/rules';
-import { findCurrentReign, findWorld } from '../worlds/world-queries';
+import { findCurrentReign, findWorld } from './world-queries';
 import {
   isResourceId,
   parcelColumns,
@@ -80,10 +80,6 @@ export class NomesRepository {
     if (!nome) {
       return null;
     }
-    const years = await tx.nileYear.findMany({
-      where: { reignId: reign.id },
-      orderBy: { index: 'asc' },
-    });
     return {
       id: nome.id,
       name: nome.name,
@@ -91,8 +87,17 @@ export class NomesRepository {
       dynastyName: nome.dynasty.name,
       dataVersion: reign.dataVersion,
       clock: { startsAtMs: reign.startsAt.getTime(), speed: world.speed },
-      floods: years.map((year) => FLOOD_FROM_DB[year.floodLevel]),
+      floods: await this.floods(tx, reign.id),
     };
+  }
+
+  /** Flood of each Nile year of the reign, by zero-based year. */
+  async floods(tx: Tx, reignId: string): Promise<FloodLevel[]> {
+    const years = await tx.nileYear.findMany({
+      where: { reignId },
+      orderBy: { index: 'asc' },
+    });
+    return years.map((year) => FLOOD_FROM_DB[year.floodLevel]);
   }
 
   /** Holds the nome row until the transaction ends: its actions queue up. */
