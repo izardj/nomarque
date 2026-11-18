@@ -1,5 +1,6 @@
 import type {
   BuildingDef,
+  BuildingId,
   GameData,
   MapSlotDef,
   ResourceId,
@@ -88,6 +89,57 @@ describe('gameDataSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('rejects an effect with an unknown resource id', () => {
+    const data = validGameData();
+    const effect = data.cards
+      .find((card) => card.id === 'C02')
+      ?.choices.find((choice) => choice.key === 'b')?.effects[0];
+    if (effect?.kind !== 'resource') {
+      throw new Error('the C02/b fixture no longer starts with a resource');
+    }
+    effect.resource = 'unobtainium' as ResourceId;
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
+  it('rejects a chance probability above 1', () => {
+    const data = validGameData();
+    const chance = data.cards
+      .find((card) => card.id === 'C05')
+      ?.choices.find((choice) => choice.key === 'b')?.effects[1];
+    if (chance?.kind !== 'chance') {
+      throw new Error('the C05/b fixture no longer ends with a chance');
+    }
+    chance.probability = 2;
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
+  it('rejects a trigger that references an unknown building', () => {
+    const data = validGameData();
+    const trigger = data.cards.find((card) => card.id === 'C14')?.trigger;
+    if (trigger?.kind !== 'built') {
+      throw new Error('the C14 fixture no longer triggers on a building');
+    }
+    trigger.building = 'castle' as BuildingId;
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
+  it('rejects a missing god', () => {
+    const data = validGameData();
+    data.gods.splice(2, 1);
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
+  it('rejects a duplicate god', () => {
+    const data = validGameData();
+    data.gods.push(structuredClone(data.gods[0]));
+
+    expect(gameDataSchema.safeParse(data).success).toBe(false);
+  });
+
   it.each<[string, (data: GameData) => void]>([
     ['a missing map slot', (data) => data.map.splice(3, 1)],
     ['a duplicate map slot', (data) => (findSlot(data, 1).slot = 0)],
@@ -122,6 +174,26 @@ describe('gameDataSchema', () => {
     [
       'a negative startingDeben',
       (data) => (data.parameters.startingDeben = -1),
+    ],
+    [
+      'a godFavorVeryLow that is not below godFavorLow',
+      (data) => (data.parameters.godFavorVeryLow = data.parameters.godFavorLow),
+    ],
+    [
+      'a godFavorBlessing above godFavorMax',
+      (data) => (data.parameters.godFavorBlessing = 101),
+    ],
+    [
+      'a godFavorStart above godFavorMax',
+      (data) => (data.parameters.godFavorStart = 101),
+    ],
+    [
+      'a card draw chance of zero',
+      (data) => (data.parameters.cardDrawChance = 0),
+    ],
+    [
+      'a fractional maximum of pending cards',
+      (data) => (data.parameters.cardMaxPending = 1.5),
     ],
   ])('rejects %s', (_name, mutate) => {
     const data = validGameData();
