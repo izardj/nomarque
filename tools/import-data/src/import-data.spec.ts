@@ -216,6 +216,8 @@ describe('real data import', () => {
       prestigeSecond: 6,
       prestigeThird: 3,
       prestigeParticipation: 1,
+      floodLowChance: 0.25,
+      floodHighChance: 0.2,
     });
   });
 

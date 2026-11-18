@@ -137,6 +137,8 @@ const parametersSchema = z
     prestigeSecond: positiveNumber,
     prestigeThird: positiveNumber,
     prestigeParticipation: positiveNumber,
+    floodLowChance: probability,
+    floodHighChance: probability,
   })
   .superRefine((value, context) => {
     const issue = (message: string, path: string[]): void => {
@@ -151,6 +153,11 @@ const parametersSchema = z
     if (value.godFavorBlessing > value.godFavorMax) {
       issue('godFavorBlessing must not exceed godFavorMax', [
         'godFavorBlessing',
+      ]);
+    }
+    if (value.floodLowChance + value.floodHighChance >= 1) {
+      issue('flood chances must leave room for a good flood', [
+        'floodHighChance',
       ]);
     }
     if (value.godFavorStart > value.godFavorMax) {

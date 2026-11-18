@@ -476,6 +476,8 @@ export function parseParameters(text: string): GameParameters {
     prestigeSecond: value('prestigeSecond'),
     prestigeThird: value('prestigeThird'),
     prestigeParticipation: value('prestigeParticipation'),
+    floodLowChance: value('floodLowChance'),
+    floodHighChance: value('floodHighChance'),
   };
 }
 

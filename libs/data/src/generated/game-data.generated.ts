@@ -2,7 +2,7 @@
 import type { GameData } from '../lib/types';
 
 export const GAME_DATA: GameData = {
-  version: '73739d438a78',
+  version: '2a1b7954f961',
   resources: [
     {
       id: 'wheat',
@@ -662,6 +662,8 @@ export const GAME_DATA: GameData = {
     prestigeSecond: 6,
     prestigeThird: 3,
     prestigeParticipation: 1,
+    floodLowChance: 0.25,
+    floodHighChance: 0.2,
   },
   expeditions: [
     {

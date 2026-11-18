@@ -188,6 +188,8 @@ export const PARAMETER_BY_LABEL = {
   "Prestige du 2e d'un classement": 'prestigeSecond',
   "Prestige du 3e d'un classement": 'prestigeThird',
   'Prestige de participation à un classement': 'prestigeParticipation',
+  "Probabilité d'une crue basse": 'floodLowChance',
+  "Probabilité d'une crue haute": 'floodHighChance',
 } as const;
 
 /**

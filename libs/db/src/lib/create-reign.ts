@@ -1,6 +1,17 @@
 import { GAME_DATA } from '@nomarque/data';
-import { REIGN_YEARS, reignLengthHours, toRealMs } from '@nomarque/rules';
-import type { Prisma, Reign, World } from './prisma';
+import { drawFloods, reignLengthHours, toRealMs } from '@nomarque/rules';
+import type {
+  FloodLevel as DbFloodLevel,
+  Prisma,
+  Reign,
+  World,
+} from './prisma';
+
+const FLOOD_TO_DB = {
+  low: 'LOW',
+  good: 'GOOD',
+  high: 'HIGH',
+} as const satisfies Record<'low' | 'good' | 'high', DbFloodLevel>;
 
 /**
  * Creates the next reign of the world, numbered after the highest one, with
@@ -31,11 +42,10 @@ export async function createReign(
     },
   });
   await tx.nileYear.createMany({
-    data: Array.from({ length: REIGN_YEARS }, (_, index) => ({
+    data: drawFloods(reign.id, GAME_DATA).map((flood, index) => ({
       reignId: reign.id,
       index,
-      floodLevel: 'GOOD' as const,
-      // Flood draws arrive with the Nile cycle (milestone J2).
+      floodLevel: FLOOD_TO_DB[flood],
       revealedAt: null,
     })),
   });

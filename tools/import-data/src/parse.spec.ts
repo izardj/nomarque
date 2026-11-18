@@ -174,6 +174,8 @@ Prestige du 1er d'un classement,10,
 Prestige du 2e d'un classement,6,
 Prestige du 3e d'un classement,3,
 Prestige de participation à un classement,1,
+Probabilité d'une crue basse,0.25,
+Probabilité d'une crue haute,0.2,
 `;
 
   it('maps parameter labels, including the nested flood multipliers', () => {

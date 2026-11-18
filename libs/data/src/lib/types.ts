@@ -214,6 +214,9 @@ export interface GameParameters {
   prestigeThird: number;
   /** Prestige for any other rank. */
   prestigeParticipation: number;
+  /** Chance of each flood level per Nile year; a good flood otherwise. */
+  floodLowChance: number;
+  floodHighChance: number;
 }
 
 export type ExpeditionDestinationId = 'sinai' | 'byblos' | 'nubia' | 'punt';
