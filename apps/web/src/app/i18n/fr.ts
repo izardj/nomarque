@@ -122,6 +122,8 @@ export const fr = {
     soon: 'bientôt',
     soonLabel: (tab: string): string => `${tab}, bientôt disponible`,
     currentPhase: (phase: string): string => `Phase actuelle : ${phase}`,
+    reignOver: 'Le règne est terminé.',
+    reignOverHint: 'Le classement est figé : plus aucune action possible.',
   },
 
   phases: {

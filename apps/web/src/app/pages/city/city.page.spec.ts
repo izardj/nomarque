@@ -1,7 +1,7 @@
 import { throwError } from 'rxjs';
 import { GAME_DATA } from '@nomarque/data';
 import { setupScreen } from '../../core/screen-testing';
-import { NOME_STATE, nomeState } from '../../core/testing';
+import { NOME_STATE, nomeState, withNome } from '../../core/testing';
 import { fr } from '../../i18n/fr';
 import { CityPage } from './city.page';
 
@@ -199,5 +199,21 @@ describe('CityPage', () => {
 
     expect(el.querySelector('.panel')).not.toBeNull();
     expect(store.error()).toBe(fr.errors.not_enough_deben);
+  });
+
+  it('disables the construction choices once the reign is over', async () => {
+    const state = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { el, fixture } = await setupScreen(CityPage, state);
+
+    tiles(el)[2].click();
+    fixture.detectChanges();
+
+    const choices = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('.choice'),
+    );
+    expect(choices.length).toBeGreaterThan(0);
+    expect(choices.every((choice) => choice.disabled)).toBe(true);
   });
 });

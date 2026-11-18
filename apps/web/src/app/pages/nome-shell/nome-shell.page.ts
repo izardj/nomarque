@@ -90,6 +90,7 @@ export class NomeShellPage {
   protected readonly tabs = TABS;
   protected readonly nome = this.store.nome;
   protected readonly error = this.store.error;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly phases = computed(() => {
     const current = this.nome()?.nile.phase;
     return NILE_PHASES.map((phase) => ({

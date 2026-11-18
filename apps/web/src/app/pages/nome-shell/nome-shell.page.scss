@@ -114,6 +114,24 @@
   }
 }
 
+.banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 16px 4px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-gold-text);
+  border-radius: 12px;
+  background: var(--color-limestone);
+  font-size: 13px;
+}
+
+.banner__title {
+  font-family: var(--font-title);
+  font-size: 16px;
+  color: var(--color-gold-text);
+}
+
 .screen {
   display: block;
   flex: 1;

@@ -43,6 +43,13 @@
   }
 </div>
 
+@if (reignOver()) {
+<section class="banner" role="status">
+  <strong class="banner__title">{{ t.reignOver }}</strong>
+  <span>{{ t.reignOverHint }}</span>
+</section>
+}
+
 <main class="screen">
   <router-outlet />
 </main>

@@ -21,6 +21,7 @@ export class WorkersPage {
 
   protected readonly t = fr.workers;
   protected readonly worldId = this.store.worldId;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly loaded = computed(() => this.store.nome() !== null);
   protected readonly cards = computed(() => {
     const nome = this.store.nome();

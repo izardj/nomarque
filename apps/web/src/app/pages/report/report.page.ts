@@ -23,6 +23,7 @@ export class ReportPage {
 
   protected readonly t = fr.report;
   protected readonly busy = this.store.busy;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly view = computed(() => {
     const state = this.store.state();
     return state === null ? null : buildReportView(state);

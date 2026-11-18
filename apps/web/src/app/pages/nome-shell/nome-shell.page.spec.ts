@@ -8,7 +8,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import type { NomeStateResponse } from '@nomarque/contracts';
 import { type Observable, of, throwError } from 'rxjs';
 import { ApiService } from '../../core/api.service';
-import { NOME_STATE } from '../../core/testing';
+import { NOME_STATE, withNome } from '../../core/testing';
 import { fr } from '../../i18n/fr';
 import { NomeShellPage } from './nome-shell.page';
 
@@ -100,6 +100,20 @@ describe('NomeShellPage', () => {
     expect(
       el.querySelector('nav [aria-current="page"]')?.textContent,
     ).toContain('Cité');
+  });
+
+  it('shows no banner while the reign runs', async () => {
+    const { el } = await setup();
+    expect(el.querySelector('.banner')).toBeNull();
+  });
+
+  it('announces the end of the reign', async () => {
+    const over = withNome({ reign: { ...NOME_STATE.nome.reign, over: true } });
+    const { el } = await setup(() => of(over));
+
+    expect(el.querySelector('.banner')?.textContent).toContain(
+      'Le règne est terminé.',
+    );
   });
 
   it('shows the translated error when the state cannot be loaded', async () => {

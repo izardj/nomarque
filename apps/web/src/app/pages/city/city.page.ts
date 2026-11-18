@@ -56,6 +56,7 @@ export class CityPage {
   }));
   protected readonly worldId = this.store.worldId;
   protected readonly busy = this.store.busy;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly selectedSlot = signal<number | null>(null);
   protected readonly chosenKey = signal<string | null>(null);
 

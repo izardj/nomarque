@@ -1,4 +1,9 @@
-import { nomeState, EMPTY_REPORT, NOME_STATE } from '../../core/testing';
+import {
+  nomeState,
+  EMPTY_REPORT,
+  NOME_STATE,
+  withNome,
+} from '../../core/testing';
 import { setupScreen } from '../../core/screen-testing';
 import { fr } from '../../i18n/fr';
 import { ReportPage } from './report.page';
@@ -102,5 +107,18 @@ describe('ReportPage', () => {
 
     expect(api.ackReport).toHaveBeenCalledWith('w1');
     expect(text(el)).toContain(fr.report.emptyTitle);
+  });
+});
+
+describe('ReportPage when the reign is over', () => {
+  it('disables the acknowledge button', async () => {
+    const state = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { el } = await setupScreen(ReportPage, state);
+
+    expect(el.querySelector<HTMLButtonElement>('button.ack')?.disabled).toBe(
+      true,
+    );
   });
 });

@@ -74,7 +74,7 @@
         type="button"
         [class.choice--on]="chosenKey() === choice.key"
         [attr.aria-pressed]="chosenKey() === choice.key"
-        [disabled]="!choice.affordable || busy()"
+        [disabled]="!choice.affordable || busy() || reignOver()"
         (click)="choose(choice)"
       >
         <span class="choice__name">{{ choice.name }}</span>
@@ -96,7 +96,7 @@
     <button
       class="btn btn--primary"
       type="button"
-      [disabled]="chosen() === null || busy()"
+      [disabled]="chosen() === null || busy() || reignOver()"
       (click)="confirm()"
     >
       {{ chosen() ? t.confirmChoice(chosen()!.name) : t.confirm }}
