@@ -8,7 +8,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import type { NomeStateResponse } from '@nomarque/contracts';
 import { type Observable, of, throwError } from 'rxjs';
 import { ApiService } from '../../core/api.service';
-import { NOME_STATE, withNome } from '../../core/testing';
+import { NOME_STATE, PENDING_CARD, withNome } from '../../core/testing';
 import { fr } from '../../i18n/fr';
 import { NomeShellPage } from './nome-shell.page';
 
@@ -25,6 +25,7 @@ async function setup(
             children: [
               { path: '', pathMatch: 'full', redirectTo: 'rapport' },
               { path: 'rapport', children: [] },
+              { path: 'cartes', children: [] },
               { path: 'cite', children: [] },
             ],
           },
@@ -72,20 +73,40 @@ describe('NomeShellPage', () => {
     expect(el.querySelectorAll('.frieze__segment--current').length).toBe(1);
   });
 
-  it('lists the five tabs, the last two being disabled and marked soon', async () => {
+  it('lists the seven tabs in session order, the last two being disabled and marked soon', async () => {
     const { el } = await setup();
     const tabs = Array.from(el.querySelectorAll('nav .tab'));
 
-    expect(tabs.length).toBe(5);
-    expect(tabs[0].textContent).toContain('Rapport');
-    expect(tabs[1].textContent).toContain('Cité');
-    expect(tabs[2].textContent).toContain('Ouvriers');
-    for (const tab of tabs.slice(3)) {
+    expect(tabs.length).toBe(7);
+    expect(tabs.map((tab) => tab.textContent?.trim().split(/\s+/)[0])).toEqual([
+      'Rapport',
+      'Cartes',
+      'Ouvriers',
+      'Cité',
+      'Dieux',
+      'Marché',
+      'Nil',
+    ]);
+    for (const tab of tabs.slice(5)) {
       expect(tab.getAttribute('aria-disabled')).toBe('true');
       expect(tab.textContent).toContain('bientôt');
     }
-    expect(tabs[3].textContent).toContain('Marché');
-    expect(tabs[4].textContent).toContain('Nil');
+  });
+
+  it('badges the cards tab with the number of pending cards', async () => {
+    const withCards = withNome({
+      cards: [PENDING_CARD, { ...PENDING_CARD, drawId: 8 }],
+    });
+    const { el } = await setup(() => of(withCards));
+    const tab = el.querySelector('nav a[href$="/cartes"]');
+
+    expect(tab?.querySelector('.tab__badge')?.textContent?.trim()).toBe('2');
+    expect(tab?.getAttribute('aria-label')).toBe('Cartes, 2 cartes en attente');
+  });
+
+  it('shows no badge without pending card', async () => {
+    const { el } = await setup();
+    expect(el.querySelector('.tab__badge')).toBeNull();
   });
 
   it('opens the report by default and marks the current tab', async () => {

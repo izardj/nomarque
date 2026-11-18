@@ -2,6 +2,8 @@ import type { ParcelDto, ResourceAmountsDto } from '@nomarque/contracts';
 import {
   type BuildingDef,
   type BuildingId,
+  type CardChoiceKey,
+  type EventCardDef,
   FR_LABELS,
   GAME_DATA,
   type HouseDef,
@@ -68,6 +70,31 @@ export function parcelName(parcel: ParcelDto): string | null {
     return `${housesLabel(parcel.houses.level, parcel.houses.count)} ×${parcel.houses.count}`;
   }
   return null;
+}
+
+/** The texts of an event card, as written in the card spreadsheet. */
+export interface CardTexts {
+  title: string;
+  text: string;
+  choices: Partial<Record<CardChoiceKey, { label: string; effect: string }>>;
+}
+
+const CARD_TEXTS: Readonly<Record<string, CardTexts>> = FR_LABELS.cards;
+
+export function cardTexts(cardId: string): CardTexts {
+  const texts = CARD_TEXTS[cardId];
+  if (texts === undefined) {
+    throw new Error(`Unknown card: ${cardId}`);
+  }
+  return texts;
+}
+
+export function cardDef(cardId: string): EventCardDef {
+  const def = GAME_DATA.cards.find((candidate) => candidate.id === cardId);
+  if (def === undefined) {
+    throw new Error(`Unknown card: ${cardId}`);
+  }
+  return def;
 }
 
 export interface AmountEntry {

@@ -1,6 +1,7 @@
 import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
 import type {
   BuildingKind,
+  God,
   Region,
   ResourceId,
   Service,
@@ -114,11 +115,15 @@ export const fr = {
     navLabel: 'Écrans du nome',
     tabs: {
       report: 'Rapport',
-      city: 'Cité',
+      cards: 'Cartes',
       workers: 'Ouvriers',
+      city: 'Cité',
+      gods: 'Dieux',
       market: 'Marché',
       nile: 'Nil',
     },
+    pendingCards: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'carte en attente' : 'cartes en attente'}`,
     soon: 'bientôt',
     soonLabel: (tab: string): string => `${tab}, bientôt disponible`,
     currentPhase: (phase: string): string => `Phase actuelle : ${phase}`,
@@ -181,6 +186,30 @@ export const fr = {
     houseWarning: (name: string): string =>
       `Attention : ${name} manque d'un service et risque de redescendre.`,
     unknownParcel: 'une parcelle',
+  },
+
+  cards: {
+    back: '‹ Rapport',
+    position: (phase: string, index: number, total: number): string =>
+      `${phase} · carte ${numberFormat.format(index)} sur ${numberFormat.format(total)}`,
+    emptyTitle: 'Aucune décision en attente.',
+    emptyText: "Méri te prévient dès qu'une carte se présente.",
+    emptyLink: 'Retour au rapport',
+    unaffordable: 'Pas de quoi payer',
+    defaultIn: (remaining: string, choice: string): string =>
+      `Sans réponse dans ${remaining}, Méri choisira « ${choice} ».`,
+    defaultNow: (choice: string): string =>
+      `Méri va choisir « ${choice} » d'un instant à l'autre.`,
+  },
+
+  gods: {
+    names: {
+      hapy: 'Hâpy',
+      osiris: 'Osiris',
+      thoth: 'Thot',
+      bastet: 'Bastet',
+      sekhmet: 'Sekhmet',
+    } satisfies Record<God, string>,
   },
 
   zones: {

@@ -79,9 +79,12 @@
     [routerLink]="link"
     routerLinkActive="tab--on"
     ariaCurrentWhenActive="page"
+    [attr.aria-label]="tabAriaLabel(tab)"
   >
     <ng-container *ngTemplateOutlet="icon; context: { $implicit: tab.icon }" />
-    {{ tabLabel(tab) }}
+    {{ tabLabel(tab) }} @if (badgeCount(tab); as count) {
+    <span class="tab__badge" aria-hidden="true">{{ count }}</span>
+    }
   </a>
   } @else {
   <span

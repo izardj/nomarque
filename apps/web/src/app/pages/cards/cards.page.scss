@@ -1,0 +1,153 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.position {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.art {
+  position: relative;
+  margin: 0;
+  height: 230px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--zone-desert);
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.art__god {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-limestone);
+  color: var(--color-carbon);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.title {
+  font-size: 26px;
+
+  &:focus-visible {
+    outline-offset: 4px;
+  }
+}
+
+.text {
+  line-height: 1.5;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-egyptian-blue);
+  border-radius: 12px;
+  background: var(--color-limestone);
+  color: var(--color-carbon);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    border-color: var(--color-line);
+    background: transparent;
+    cursor: default;
+  }
+}
+
+.choice__label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-egyptian-blue);
+
+  .choice:disabled & {
+    color: var(--color-text-secondary);
+  }
+}
+
+.choice__effect {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.choice__effect--penalty,
+.choice__reason {
+  color: var(--color-red-ochre);
+}
+
+.choice__reason {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.footnote {
+  padding: 0 4px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.empty {
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.empty__title {
+  font-family: var(--font-title);
+  font-size: 19px;
+  font-weight: 700;
+}
