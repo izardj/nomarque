@@ -1,4 +1,4 @@
-import type { ResourceId } from '@nomarque/data';
+import type { CardChoiceKey, ResourceId } from '@nomarque/data';
 import type { HouseLevel, ResourceAmounts } from './state';
 
 export interface HouseLevelChange {
@@ -11,6 +11,18 @@ export interface HouseLevelChange {
 export interface HouseWarning {
   slot: number;
   at: number;
+}
+
+export interface CardDealt {
+  drawId: number;
+  cardId: string;
+  at: number;
+}
+
+export interface CardDefaulted extends CardDealt {
+  /** Instant the card was dealt; `at` is its expiry. */
+  drawnAt: number;
+  choice: CardChoiceKey;
 }
 
 /** What happened over an interval, for the steward's report. */
@@ -34,6 +46,11 @@ export interface AdvanceReport {
   completed: number[];
   houseChanges: HouseLevelChange[];
   houseWarnings: HouseWarning[];
+  /** Change of the pharaoh's favour from the tribute. */
+  royalFavor: number;
+  cardsDealt: CardDealt[];
+  /** Cards whose grace period ended: their default choice applied. */
+  cardsDefaulted: CardDefaulted[];
 }
 
 export function emptyReport(from: number, to: number): AdvanceReport {
@@ -51,6 +68,9 @@ export function emptyReport(from: number, to: number): AdvanceReport {
     completed: [],
     houseChanges: [],
     houseWarnings: [],
+    royalFavor: 0,
+    cardsDealt: [],
+    cardsDefaulted: [],
   };
 }
 
@@ -73,6 +93,9 @@ export function mergeReports(
     completed: [...first.completed, ...second.completed],
     houseChanges: [...first.houseChanges, ...second.houseChanges],
     houseWarnings: [...first.houseWarnings, ...second.houseWarnings],
+    royalFavor: first.royalFavor + second.royalFavor,
+    cardsDealt: [...first.cardsDealt, ...second.cardsDealt],
+    cardsDefaulted: [...first.cardsDefaulted, ...second.cardsDefaulted],
   };
 }
 

@@ -19,7 +19,8 @@
       "@nomarque/rules": ["./libs/rules/src/index.ts"],
       "@nomarque/data": ["./libs/data/src/index.ts"],
       "@nomarque/contracts": ["./libs/contracts/src/index.ts"],
-      "@nomarque/db": ["./libs/db/src/index.ts"]
+      "@nomarque/db": ["./libs/db/src/index.ts"],
+      "@nomarque/nome-store": ["./libs/nome-store/src/index.ts"]
     }
   }
 }

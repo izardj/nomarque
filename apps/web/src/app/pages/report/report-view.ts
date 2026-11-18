@@ -6,6 +6,7 @@ import type {
 import {
   agree,
   amountEntries,
+  cardTexts,
   formatNumber,
   parcelName,
   plural,
@@ -39,6 +40,8 @@ export interface ReportView {
   storageHint: boolean;
   /** Nothing to tell: no line at all. */
   empty: boolean;
+  /** Event cards waiting for the player's decision. */
+  pendingCards: number;
 }
 
 function tallies(
@@ -72,6 +75,7 @@ export function buildReportView({
   const t = fr.report;
   const none = () => '';
   const taxes = Math.round(report.taxes);
+  const royalFavor = Math.round(report.royalFavor);
 
   const lines: Tally[] = [
     ...tallies('produced', report.produced, true, none),
@@ -93,6 +97,16 @@ export function buildReportView({
       (resource, count) => ` ${agree(t.consumedWord, resource, count)}`,
     ),
     ...tallies('tribute', report.tribute, false, () => ` · ${t.tribute}`),
+    ...(royalFavor === 0
+      ? []
+      : [
+          {
+            key: 'royal-favor',
+            gain: royalFavor > 0,
+            amount: `${royalFavor > 0 ? '+' : MINUS}${formatNumber(Math.abs(royalFavor))}`,
+            label: t.royalFavor,
+          },
+        ]),
   ];
 
   const notes: Note[] = [
@@ -134,6 +148,22 @@ export function buildReportView({
       tone: 'bad' as const,
       text: t.houseWarning(parcelAt(nome.parcels, warning.slot)),
     })),
+    ...report.cardsDealt.map((dealt) => ({
+      key: `card-${dealt.drawId}`,
+      tone: 'neutral' as const,
+      text: t.cardDealt(cardTexts(dealt.cardId).title),
+    })),
+    ...report.cardsDefaulted.map((resolved) => {
+      const texts = cardTexts(resolved.cardId);
+      return {
+        key: `card-default-${resolved.drawId}`,
+        tone: 'neutral' as const,
+        text: t.cardDefaulted(
+          texts.title,
+          texts.choices[resolved.choice]?.label ?? '',
+        ),
+      };
+    }),
   ];
 
   return {
@@ -142,5 +172,6 @@ export function buildReportView({
     notes,
     storageHint: amountEntries(report.lost).length > 0,
     empty: lines.length === 0 && notes.length === 0,
+    pendingCards: nome.cards.length,
   };
 }

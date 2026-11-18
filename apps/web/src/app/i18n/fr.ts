@@ -1,6 +1,12 @@
-import type { NilePhaseDto, NomeActionErrorCode } from '@nomarque/contracts';
+import type {
+  GodStandingDto,
+  NilePhaseDto,
+  NomeActionErrorCode,
+} from '@nomarque/contracts';
 import type {
   BuildingKind,
+  FloodLevel,
+  God,
   Region,
   ResourceId,
   Service,
@@ -114,14 +120,20 @@ export const fr = {
     navLabel: 'Écrans du nome',
     tabs: {
       report: 'Rapport',
-      city: 'Cité',
+      cards: 'Cartes',
       workers: 'Ouvriers',
+      city: 'Cité',
+      gods: 'Dieux',
       market: 'Marché',
       nile: 'Nil',
     },
+    pendingCards: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'carte en attente' : 'cartes en attente'}`,
     soon: 'bientôt',
     soonLabel: (tab: string): string => `${tab}, bientôt disponible`,
     currentPhase: (phase: string): string => `Phase actuelle : ${phase}`,
+    reignOver: 'Le règne est terminé.',
+    reignOverHint: 'Le classement est figé : plus aucune action possible.',
   },
 
   phases: {
@@ -179,6 +191,102 @@ export const fr = {
     houseWarning: (name: string): string =>
       `Attention : ${name} manque d'un service et risque de redescendre.`,
     unknownParcel: 'une parcelle',
+    royalFavor: 'faveur royale',
+    cardDealt: (title: string): string => `Nouvelle carte : ${title}.`,
+    cardDefaulted: (title: string, choice: string): string =>
+      `Sans réponse de ta part, Méri a tranché pour « ${title} » : ${choice}.`,
+    cardsLink: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'décision attend' : 'décisions attendent'} ta réponse`,
+    cardsLinkAction: 'Voir les cartes',
+  },
+
+  cards: {
+    back: '‹ Rapport',
+    position: (phase: string, index: number, total: number): string =>
+      `${phase} · carte ${numberFormat.format(index)} sur ${numberFormat.format(total)}`,
+    emptyTitle: 'Aucune décision en attente.',
+    emptyText: "Méri te prévient dès qu'une carte se présente.",
+    emptyLink: 'Retour au rapport',
+    unaffordable: 'Pas de quoi payer',
+    defaultIn: (remaining: string, choice: string): string =>
+      `Sans réponse dans ${remaining}, Méri choisira « ${choice} ».`,
+    defaultNow: (choice: string): string =>
+      `Méri va choisir « ${choice} » d'un instant à l'autre.`,
+  },
+
+  nile: {
+    title: 'Le Nil',
+    yearAndPhase: (year: number, phase: string): string =>
+      `Année ${numberFormat.format(year)} du règne · ${phase}`,
+    flood: (level: string): string => `Crue de cette année : ${level}`,
+    nextFlood: (level: string): string =>
+      `Crue annoncée pour l'an prochain : ${level}`,
+    floods: {
+      low: 'basse',
+      good: 'bonne',
+      high: 'haute',
+    } satisfies Record<FloodLevel, string>,
+    cropsLocked: "Cultures verrouillées jusqu'à la prochaine crue.",
+    cropsOpen: (remaining: string): string =>
+      `Cultures modifiables encore ${remaining}.`,
+    cropsOpenSoon: 'Cultures modifiables, plus pour longtemps.',
+  },
+
+  gods: {
+    title: 'Les dieux',
+    listLabel: 'Faveur des dieux',
+    domains: {
+      hapy: 'La crue',
+      osiris: 'Les récoltes',
+      thoth: 'Le savoir',
+      bastet: 'Le foyer',
+      sekhmet: 'La santé',
+    } satisfies Record<God, string>,
+    standings: {
+      blessing: 'Bénédiction',
+      neutral: 'Neutre',
+      low: 'Négligé',
+      veryLow: 'Courroucé',
+    } satisfies Record<GodStandingDto, string>,
+    gauge: (name: string): string => `Faveur de ${name}`,
+    gaugeValue: (value: number, max: number): string =>
+      `${numberFormat.format(Math.round(value))} sur ${numberFormat.format(max)}`,
+    thresholds: (low: number, blessing: number): string =>
+      `Négligé sous ${numberFormat.format(low)} · Bénédiction dès ${numberFormat.format(blessing)}`,
+    offer: (quantity: number, resource: string, favor: number): string =>
+      `Offrir ${numberFormat.format(quantity)} ${resource} (+${numberFormat.format(favor)})`,
+    offerFor: (label: string, god: string): string => `${label}, ${god}`,
+    offeringIn: (remaining: string): string =>
+      `Prochaine offrande dans ${remaining}`,
+    offeringSoon: 'Prochaine offrande dans un instant',
+    notEnough: (resource: string): string => `Pas assez de ${resource}`,
+    modifiersTitle: 'Effets en cours',
+    modifiersEmpty: 'Aucun effet en cours.',
+    modifierEnds: (remaining: string): string => `encore ${remaining}`,
+    modifierEndsSoon: 'bientôt fini',
+    modifierPending: 'à venir',
+    modifierFallback: 'Effet de carte',
+    modifier: {
+      workforce: (workerClass: string, change: string): string =>
+        `${workerClass} ${change}`,
+      workforceAll: (change: string): string => `Production ${change}`,
+      stopped: (who: string): string => `${who} à l'arrêt`,
+      idle: (who: string, change: string): string => `${who} ${change}`,
+      fields: 'Ouvriers des champs',
+      production: (resource: string, change: string): string =>
+        `Production de ${resource} ${change}`,
+      consumption: (resource: string, change: string): string =>
+        `Consommation de ${resource} ${change}`,
+      housesBlocked: 'Montée de niveau des maisons bloquée',
+      housesFast: 'Montée de niveau des maisons accélérée',
+    },
+    names: {
+      hapy: 'Hâpy',
+      osiris: 'Osiris',
+      thoth: 'Thot',
+      bastet: 'Bastet',
+      sekhmet: 'Sekhmet',
+    } satisfies Record<God, string>,
   },
 
   zones: {
@@ -287,6 +395,11 @@ export const fr = {
     notEnoughDeben: 'Pas assez de deben',
     confirm: 'Construire',
     confirmChoice: (name: string): string => `Construire : ${name}`,
+    cropTitle: 'Culture',
+    cropHint: 'Tu peux changer de culture tant que dure la crue.',
+    cropCurrent: 'actuelle',
+    cropLocked:
+      'Les semailles sont faites : la culture ne change plus avant la prochaine crue.',
   },
 
   errors: {
@@ -310,5 +423,15 @@ export const fr = {
       "Il te manque des deben pour cette construction. Ta bourse n'est pas encore assez ronde.",
     no_building: "Il n'y a pas de bâtiment sur cette parcelle.",
     invalid_workers: "Ce nombre d'ouvriers ne convient pas à ce bâtiment.",
+    not_a_field: "Cette parcelle n'est pas un champ.",
+    crops_locked:
+      "Les semailles sont faites : on ne change plus de culture avant l'Akhet.",
+    offering_too_soon:
+      'Les dieux ont déjà reçu ton offrande. Laisse-les digérer.',
+    not_enough_resources: 'Il te manque de quoi payer cette offrande.',
+    unknown_card: "Cette carte n'est plus en attente.",
+    unknown_choice: 'Cette carte ne propose pas ce choix.',
+    cannot_afford: "Tu n'as pas de quoi payer ce choix.",
+    reign_over: 'Le règne est terminé : plus rien ne peut changer.',
   } satisfies Record<NomeActionErrorCode, string> & Record<string, string>,
 } as const;

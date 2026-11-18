@@ -1,4 +1,5 @@
 import { GAME_DATA } from '@nomarque/data';
+import { drawFloods } from '@nomarque/rules';
 import { createPrismaClient, type PrismaClient } from './prisma';
 import { seedWorld, type SeedWorldOptions } from './seed-world';
 
@@ -57,8 +58,10 @@ describe.skipIf(!databaseUrl)('seedWorld', () => {
       orderBy: { index: 'asc' },
     });
     expect(years.map((year) => year.index)).toEqual([0, 1, 2, 3]);
+    expect(years.map((year) => year.floodLevel.toLowerCase())).toEqual(
+      drawFloods(reign.id, GAME_DATA),
+    );
     for (const year of years) {
-      expect(year.floodLevel).toBe('GOOD');
       expect(year.revealedAt).toBeNull();
     }
   });

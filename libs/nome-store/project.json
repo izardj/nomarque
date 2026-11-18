@@ -1,0 +1,19 @@
+{
+  "name": "nome-store",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/nome-store/src",
+  "projectType": "library",
+  "tags": ["scope:server", "type:store"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/nome-store",
+        "main": "libs/nome-store/src/index.ts",
+        "tsConfig": "libs/nome-store/tsconfig.lib.json",
+        "assets": ["libs/nome-store/*.md"]
+      }
+    }
+  }
+}

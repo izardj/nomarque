@@ -3,15 +3,19 @@ emplacement,ligne,colonne,zone,contenu
 1,0,1,Désert,
 2,0,2,Désert,
 3,0,3,Désert,
-4,1,0,Ville,Hutte
-5,1,1,Ville,Puits
-6,1,2,Ville,Grenier
-7,1,3,Ville,
-8,2,0,Terre noire,Champ de blé
-9,2,1,Terre noire,
-10,2,2,Terre noire,
-11,2,3,Terre noire,
-12,3,0,Fleuve,
-13,3,1,Fleuve,
-14,3,2,Fleuve,
-15,3,3,Fleuve,
+4,0,4,Désert,
+5,1,0,Ville,Hutte
+6,1,1,Ville,Puits
+7,1,2,Ville,Grenier
+8,1,3,Ville,
+9,1,4,Ville,
+10,2,0,Terre noire,Champ de blé
+11,2,1,Terre noire,
+12,2,2,Terre noire,
+13,2,3,Terre noire,
+14,2,4,Terre noire,
+15,3,0,Fleuve,
+16,3,1,Fleuve,
+17,3,2,Fleuve,
+18,3,3,Fleuve,
+19,3,4,Fleuve,

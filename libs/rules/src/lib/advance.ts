@@ -4,12 +4,18 @@
 //
 // Two kinds of instants split the interval:
 // - discrete events, at fixed instants of the game: construction ends, the
-//   6-hour grid (house levels), harvest, tribute, phase and year starts;
-// - stock events between them: a stock reaching zero or its capacity changes
-//   the flows, so the interval is cut there too.
+//   6-hour grid (house levels), harvest, tribute, phase and year starts, card
+//   draws and card expiries, start and end of lasting card effects;
+// - stock events between them: a stock or a god's favour reaching zero or its
+//   cap changes the flows, so the interval is cut there too.
 // Between two such instants every rate is constant and integrates exactly.
 
-import type { Service, ResourceId } from '@nomarque/data';
+import {
+  GODS,
+  WORKER_CLASSES,
+  type ResourceId,
+  type Service,
+} from '@nomarque/data';
 import {
   HOUSE_RULES,
   NILE_CALENDAR,
@@ -19,6 +25,7 @@ import {
   nextHourOfYear,
   phaseAt,
 } from './calendar';
+import { applyChoice, drawCard, isDrawInstant, nextDrawAfter } from './cards';
 import { catalogOf, parcelDistance, type Catalog } from './catalog';
 import {
   STOCK_EPSILON,
@@ -27,6 +34,8 @@ import {
   workforce,
   type Workforce,
 } from './economy';
+import { factor, activeModifiers, upgradeMode } from './modifiers';
+import { favorRate, floodMultiplier, osirisShare, upgradeHours } from './gods';
 import { addAmount, emptyReport, type AdvanceReport } from './report';
 import {
   isComplete,
@@ -84,9 +93,25 @@ function nextEventAfter(state: NomeState, t: number, catalog: Catalog): number {
     nextHourOfYear(t, NILE_CALENDAR.harvestAt, yearHours),
     nextHourOfYear(t, NILE_CALENDAR.tributeAt, yearHours),
   );
+  next = Math.min(
+    next,
+    nextDrawAfter(t, catalog.data.parameters.cardDrawIntervalHours),
+  );
   for (const parcel of state.parcels) {
     if (parcel.buildEndsAt !== null && parcel.buildEndsAt > t) {
       next = Math.min(next, parcel.buildEndsAt);
+    }
+  }
+  for (const modifier of state.rules.modifiers) {
+    for (const at of [modifier.startsAt, modifier.endsAt]) {
+      if (at > t) {
+        next = Math.min(next, at);
+      }
+    }
+  }
+  for (const card of state.rules.cards.pending) {
+    if (card.expiresAt > t) {
+      next = Math.min(next, card.expiresAt);
     }
   }
   return next;
@@ -100,25 +125,32 @@ function integrate(
   catalog: Catalog,
   report: AdvanceReport,
 ): void {
-  const yearHours = catalog.data.parameters.yearHours;
-  const phase = phaseAt((t0 + t1) / 2, yearHours).phase;
-  const work = workforce(state, catalog, phase);
+  const params = catalog.data.parameters;
+  const mid = (t0 + t1) / 2;
+  const phase = phaseAt(mid, params.yearHours).phase;
+  const work = workforce(state, catalog, mid);
   const capacity = storageCapacity(state, catalog, work);
+  const gods = state.rules.gods;
   let t = t0;
   for (let i = 0; t < t1; i++) {
     if (i >= MAX_STOCK_EVENTS) {
       throw new Error(`too many stock events between ${t0} and ${t1}`);
     }
     const f = flows(state, catalog, work, capacity);
+    const favor = favorRate(state, catalog, work, f);
     let step = t1 - t;
     for (const resource of catalog.resourceOrder) {
-      const rate = f.net[resource] ?? 0;
-      const stock = state.stocks[resource] ?? 0;
-      if (rate < 0 && stock > STOCK_EPSILON) {
-        step = Math.min(step, stock / -rate);
-      } else if (rate > 0 && stock < capacity - STOCK_EPSILON) {
-        step = Math.min(step, (capacity - stock) / rate);
-      }
+      step = Math.min(
+        step,
+        timeToBound(
+          state.stocks[resource] ?? 0,
+          f.net[resource] ?? 0,
+          capacity,
+        ),
+      );
+    }
+    for (const god of GODS) {
+      step = Math.min(step, timeToBound(gods[god], favor, params.godFavorMax));
     }
 
     for (const resource of catalog.resourceOrder) {
@@ -133,6 +165,9 @@ function integrate(
         stock = capacity;
       }
       state.stocks[resource] = stock;
+    }
+    for (const god of GODS) {
+      gods[god] = moveToward(gods[god], favor, step, params.godFavorMax);
     }
     scaleInto(report.produced, f.produced, step);
     scaleInto(report.consumed, f.consumed, step);
@@ -153,6 +188,43 @@ function integrate(
     }
     t = step >= t1 - t ? t1 : t + step;
   }
+}
+
+/** Hours until a quantity moving at `rate` reaches 0 or `cap`. */
+function timeToBound(value: number, rate: number, cap: number): number {
+  if (rate < 0 && value > STOCK_EPSILON) {
+    return value / -rate;
+  }
+  if (rate > 0 && value < cap - STOCK_EPSILON) {
+    return (cap - value) / rate;
+  }
+  return Infinity;
+}
+
+/** The quantity after `hours` at `rate`, held within [0, cap]. */
+function moveToward(
+  value: number,
+  rate: number,
+  hours: number,
+  cap: number,
+): number {
+  if (rate === 0) {
+    return value;
+  }
+  if (rate < 0 && value <= STOCK_EPSILON) {
+    return value;
+  }
+  if (rate > 0 && value >= cap - STOCK_EPSILON) {
+    return value;
+  }
+  const moved = value + rate * hours;
+  if (rate < 0 && moved <= STOCK_EPSILON) {
+    return 0;
+  }
+  if (rate > 0 && moved >= cap - STOCK_EPSILON) {
+    return cap;
+  }
+  return moved;
 }
 
 function accumulatePeret(
@@ -179,8 +251,9 @@ function applyEvents(
   catalog: Catalog,
   report: AdvanceReport,
 ): void {
-  const yearHours = catalog.data.parameters.yearHours;
-  const { year, hourOfYear, phase } = phaseAt(t, yearHours);
+  const params = catalog.data.parameters;
+  const { year, hourOfYear } = phaseAt(t, params.yearHours);
+  const rules = state.rules;
 
   for (const parcel of state.parcels) {
     if (parcel.buildEndsAt !== null && parcel.buildEndsAt <= t) {
@@ -188,6 +261,7 @@ function applyEvents(
       report.completed.push(parcel.slot);
     }
   }
+  rules.modifiers = rules.modifiers.filter((m) => m.endsAt > t);
   if (hourOfYear === NILE_CALENDAR.harvestAt) {
     harvest(state, year, context, catalog, report);
   }
@@ -196,15 +270,46 @@ function applyEvents(
   }
   if (isGridPoint(t)) {
     evaluateHouses(state, t, catalog, report);
+    trackBusyWorkers(state, t, catalog);
   }
   if (hourOfYear === 0) {
-    state.rules.harvested = {};
+    rules.harvested = {};
+    rules.cards.dealtThisYear = [];
+    rules.floodForecastHours = 0;
+  }
+  for (const card of [...rules.cards.pending]) {
+    if (card.expiresAt <= t) {
+      const def = context.data.cards.find((c) => c.id === card.cardId);
+      if (!def) {
+        throw new Error(`unknown card ${card.cardId}`);
+      }
+      applyChoice(
+        state,
+        card.drawId,
+        def.defaultChoice,
+        t,
+        context,
+        catalog,
+        false,
+        report,
+      );
+      report.cardsDefaulted.push({
+        drawId: card.drawId,
+        cardId: card.cardId,
+        drawnAt: card.drawnAt,
+        at: t,
+        choice: def.defaultChoice,
+      });
+    }
+  }
+  if (isDrawInstant(t, params.cardDrawIntervalHours)) {
+    drawCard(state, t, context, report);
   }
 
   const capacity = storageCapacity(
     state,
     catalog,
-    workforce(state, catalog, phase),
+    workforce(state, catalog, t),
   );
   for (const resource of catalog.resourceOrder) {
     const stock = state.stocks[resource] ?? 0;
@@ -227,7 +332,11 @@ function harvest(
   if (flood === undefined) {
     throw new RangeError(`no flood level for year ${year}`);
   }
-  const multiplier = catalog.data.parameters.floodMultiplier[flood];
+  const params = catalog.data.parameters;
+  const multiplier =
+    floodMultiplier(state, params, flood) *
+    factor(state.rules.harvestPercent) *
+    (1 + osirisShare(state, params));
   const peretHours = NILE_CALENDAR.peretEndsAt - NILE_CALENDAR.akhetEndsAt;
   for (const parcel of state.parcels) {
     if (!parcel.building || !isComplete(parcel)) {
@@ -247,6 +356,7 @@ function harvest(
     }
   }
   state.rules.peretOccupancy = {};
+  state.rules.harvestPercent = 0;
 }
 
 function levyTribute(
@@ -254,7 +364,9 @@ function levyTribute(
   catalog: Catalog,
   report: AdvanceReport,
 ): void {
-  const rate = catalog.data.parameters.tributeRate;
+  const params = catalog.data.parameters;
+  const rate = params.tributeRate * factor(state.rules.tributePercent);
+  let favor = 0;
   for (const resource of catalog.data.resources) {
     if (!resource.cereal) {
       continue;
@@ -263,9 +375,27 @@ function levyTribute(
     const paid = Math.min(due, state.stocks[resource.id] ?? 0);
     addAmount(state.stocks, resource.id, -paid);
     addAmount(report.tribute, resource.id, paid);
+    favor += paid * params.royalFavorPerTribute;
     if (due - paid > STOCK_EPSILON) {
       addAmount(report.tributeMissing, resource.id, due - paid);
+      favor -= (due - paid) * params.royalFavorPerMissingTribute;
     }
+  }
+  const before = state.favor;
+  state.favor = Math.max(0, state.favor + favor);
+  report.royalFavor += state.favor - before;
+  state.rules.tributePercent = 0;
+}
+
+/** Hours each class has had every available worker assigned, on the grid. */
+function trackBusyWorkers(state: NomeState, t: number, catalog: Catalog): void {
+  const work = workforce(state, catalog, t);
+  for (const c of WORKER_CLASSES) {
+    const { available, assigned } = work.classes[c];
+    state.rules.busyHours[c] =
+      available > 0 && assigned >= available
+        ? state.rules.busyHours[c] + SEGMENT_HOURS
+        : 0;
   }
 }
 
@@ -285,9 +415,12 @@ function evaluateHouses(
   catalog: Catalog,
   report: AdvanceReport,
 ): void {
-  const phase = phaseAt(t, catalog.data.parameters.yearHours).phase;
-  const work = workforce(state, catalog, phase);
+  const params = catalog.data.parameters;
+  const work = workforce(state, catalog, t);
   const services = activeServices(state, catalog, work);
+  const mode = upgradeMode(activeModifiers(state, t));
+  const baseHours = upgradeHours(state, params, HOUSE_RULES.upgradeAfterHours);
+  const neededHours = mode === 'fast' ? baseHours / 2 : baseHours;
 
   for (const parcel of state.parcels) {
     const cell = state.rules.cells[parcel.slot];
@@ -312,8 +445,12 @@ function evaluateHouses(
         next.needs.every(
           (need) => (state.stocks[need.resource] ?? 0) > STOCK_EPSILON,
         );
-      track.upHours = reachable ? track.upHours + SEGMENT_HOURS : 0;
-      if (next && track.upHours >= HOUSE_RULES.upgradeAfterHours) {
+      if (!reachable) {
+        track.upHours = 0;
+      } else if (mode !== 'blocked') {
+        track.upHours += SEGMENT_HOURS;
+      }
+      if (next && track.upHours >= neededHours) {
         parcel.houses.level = next.level;
         report.houseChanges.push({
           slot: parcel.slot,

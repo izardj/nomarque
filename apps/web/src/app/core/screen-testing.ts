@@ -23,6 +23,9 @@ export async function setupScreen<T>(
     build: vi.fn(() => of(answer)),
     assignWorkers: vi.fn(() => of(answer)),
     ackReport: vi.fn(() => of(answer)),
+    chooseCard: vi.fn(() => of(answer)),
+    makeOffering: vi.fn(() => of(answer)),
+    chooseCrop: vi.fn(() => of(answer)),
   };
   TestBed.configureTestingModule({
     imports: [component],

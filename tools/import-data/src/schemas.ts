@@ -4,12 +4,15 @@
 
 import {
   BUILDING_IDS,
+  GODS,
   HOUSE_IDS,
   REGIONS,
   RESOURCE_IDS,
   SERVICES,
   WORKER_CLASSES,
   ZONES,
+  type CardEffect,
+  type CardTrigger,
   type GameData,
 } from '@nomarque/data';
 import { z } from 'zod';
@@ -27,9 +30,11 @@ const EXPEDITION_DESTINATIONS = ['sinai', 'byblos', 'nubia', 'punt'] as const;
 
 const CARD_PHASES = ['any', 'akhet', 'peret', 'shemu'] as const;
 
-const GODS = ['hapy', 'osiris', 'thoth', 'bastet', 'sekhmet'] as const;
-
 const CARD_CHOICE_KEYS = ['a', 'b', 'c'] as const;
+
+const FLOOD_LEVELS = ['low', 'good', 'high'] as const;
+
+const TRIGGER_FAVOR_LEVELS = ['low', 'veryLow'] as const;
 
 /** All game values must be finite and non-negative. */
 const nonNegativeNumber = z.number().min(0);
@@ -82,30 +87,203 @@ const houseSchema = z.object({
   inMvp: z.boolean(),
 });
 
-const parametersSchema = z.object({
-  activityRate: nonNegativeNumber,
-  floodMultiplier: z.object({
-    low: nonNegativeNumber,
-    good: nonNegativeNumber,
-    high: nonNegativeNumber,
+const probability = z.number().gt(0).max(1);
+
+const parametersSchema = z
+  .object({
+    activityRate: nonNegativeNumber,
+    floodMultiplier: z.object({
+      low: nonNegativeNumber,
+      good: nonNegativeNumber,
+      high: nonNegativeNumber,
+    }),
+    priceFloorFactor: nonNegativeNumber,
+    priceCeilingFactor: nonNegativeNumber,
+    marketTax: nonNegativeNumber,
+    tributeRate: nonNegativeNumber,
+    yearHours: nonNegativeNumber,
+    defaultSpeed: nonNegativeNumber,
+    catchUpMultiplier: nonNegativeNumber,
+    inactivityDaysBeforeAbandon: nonNegativeNumber,
+    registrationClosesAfterYear: nonNegativeNumber,
+    baseStorage: positiveNumber,
+    granaryCapacity: positiveNumber,
+    housesPerBlock: positiveNumber,
+    houseBlockCost: z.object({ deben: positiveNumber }),
+    houseBlockBuildHours: positiveNumber,
+    houseZones: z.array(z.enum(ZONES)).min(1),
+    startingDeben: nonNegativeNumber,
+    godFavorStart: nonNegativeNumber,
+    godFavorMax: positiveNumber,
+    godFavorDecayPerHour: positiveNumber,
+    templeFavorPerHour: positiveNumber,
+    godFavorLow: positiveNumber,
+    godFavorVeryLow: positiveNumber,
+    godFavorBlessing: positiveNumber,
+    offeringIntervalHours: positiveNumber,
+    hapyLowFloodMultiplier: positiveNumber,
+    osirisHarvestShare: positiveNumber,
+    bastetUpgradeHours: positiveNumber,
+    cardDrawIntervalHours: positiveNumber,
+    cardDrawChance: probability,
+    cardMaxPending: z.number().int().min(1),
+    cardGraceHours: positiveNumber,
+    cardConditionalWeight: positiveNumber,
+    cardRareWeight: positiveNumber,
+    royalFavorHigh: positiveNumber,
+    royalFavorPerTribute: positiveNumber,
+    royalFavorPerMissingTribute: positiveNumber,
+    prestigeFirst: positiveNumber,
+    prestigeSecond: positiveNumber,
+    prestigeThird: positiveNumber,
+    prestigeParticipation: positiveNumber,
+    floodLowChance: probability,
+    floodHighChance: probability,
+  })
+  .superRefine((value, context) => {
+    const issue = (message: string, path: string[]): void => {
+      context.addIssue({ code: 'custom', message, path });
+    };
+    if (value.godFavorVeryLow >= value.godFavorLow) {
+      issue('godFavorVeryLow must be below godFavorLow', ['godFavorVeryLow']);
+    }
+    if (value.godFavorLow >= value.godFavorBlessing) {
+      issue('godFavorLow must be below godFavorBlessing', ['godFavorLow']);
+    }
+    if (value.godFavorBlessing > value.godFavorMax) {
+      issue('godFavorBlessing must not exceed godFavorMax', [
+        'godFavorBlessing',
+      ]);
+    }
+    if (value.floodLowChance + value.floodHighChance >= 1) {
+      issue('flood chances must leave room for a good flood', [
+        'floodHighChance',
+      ]);
+    }
+    if (value.godFavorStart > value.godFavorMax) {
+      issue('godFavorStart must not exceed godFavorMax', ['godFavorStart']);
+    }
+  });
+
+const godIdSchema = z.enum(GODS);
+
+const godSchema = z.object({
+  id: godIdSchema,
+  offering: z.object({
+    resource: z.enum(RESOURCE_IDS),
+    quantity: positiveNumber,
   }),
-  priceFloorFactor: nonNegativeNumber,
-  priceCeilingFactor: nonNegativeNumber,
-  marketTax: nonNegativeNumber,
-  tributeRate: nonNegativeNumber,
-  yearHours: nonNegativeNumber,
-  defaultSpeed: nonNegativeNumber,
-  catchUpMultiplier: nonNegativeNumber,
-  inactivityDaysBeforeAbandon: nonNegativeNumber,
-  registrationClosesAfterYear: nonNegativeNumber,
-  baseStorage: positiveNumber,
-  granaryCapacity: positiveNumber,
-  housesPerBlock: positiveNumber,
-  houseBlockCost: z.object({ deben: positiveNumber }),
-  houseBlockBuildHours: positiveNumber,
-  houseZones: z.array(z.enum(ZONES)).min(1),
-  startingDeben: nonNegativeNumber,
+  favorPerOffering: positiveNumber,
 });
+
+const cardTargetSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('building'), building: z.enum(BUILDING_IDS) }),
+  z.object({ kind: z.literal('zone'), zone: z.enum(ZONES) }),
+  z.object({ kind: z.literal('fields') }),
+]);
+
+const cardEffectSchema: z.ZodType<CardEffect> = z.lazy(() =>
+  z.discriminatedUnion('kind', [
+    z.object({
+      kind: z.literal('resource'),
+      resource: z.enum(RESOURCE_IDS),
+      amount: z.number(),
+    }),
+    z.object({
+      kind: z.literal('resourceShare'),
+      resource: z.enum(RESOURCE_IDS),
+      percent: z.number(),
+    }),
+    z.object({ kind: z.literal('deben'), amount: z.number() }),
+    z.object({ kind: z.literal('royalFavor'), amount: z.number() }),
+    z.object({
+      kind: z.literal('godFavor'),
+      god: z.union([godIdSchema, z.literal('all')]),
+      amount: z.number(),
+    }),
+    z.object({
+      kind: z.literal('population'),
+      workerClass: z.enum(WORKER_CLASSES),
+      amount: z.number(),
+    }),
+    z.object({
+      kind: z.literal('workforce'),
+      workerClass: z.union([z.enum(WORKER_CLASSES), z.literal('all')]),
+      change: z.union([
+        z.object({ percent: z.number() }),
+        z.object({ count: z.number() }),
+      ]),
+      hours: positiveNumber,
+    }),
+    z.object({
+      kind: z.literal('idle'),
+      target: cardTargetSchema,
+      percent: z.number(),
+      hours: positiveNumber,
+    }),
+    z.object({
+      kind: z.literal('production'),
+      resource: z.enum(RESOURCE_IDS),
+      percent: z.number(),
+      hours: z.union([positiveNumber, z.literal('year')]),
+      startsAfter: nonNegativeNumber,
+    }),
+    z.object({
+      kind: z.literal('consumption'),
+      resource: z.enum(RESOURCE_IDS),
+      percent: z.number(),
+      hours: positiveNumber,
+    }),
+    z.object({ kind: z.literal('harvest'), percent: z.number() }),
+    z.object({ kind: z.literal('tribute'), percent: z.number() }),
+    z.object({
+      kind: z.literal('houseUpgrade'),
+      mode: z.enum(['blocked', 'fast']),
+      hours: positiveNumber,
+    }),
+    z.object({ kind: z.literal('floodForecast'), hours: positiveNumber }),
+    z.object({
+      kind: z.literal('chance'),
+      probability,
+      effect: cardEffectSchema,
+    }),
+  ]),
+);
+
+const cardTriggerSchema: z.ZodType<CardTrigger> = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('random') }),
+  z.object({ kind: z.literal('rare') }),
+  z.object({ kind: z.literal('tutorial') }),
+  z.object({
+    kind: z.literal('stockAbove'),
+    resource: z.enum(RESOURCE_IDS),
+    quantity: nonNegativeNumber,
+  }),
+  z.object({
+    kind: z.literal('godFavorBelow'),
+    god: godIdSchema,
+    level: z.enum(TRIGGER_FAVOR_LEVELS),
+  }),
+  z.object({ kind: z.literal('royalFavorHigh') }),
+  z.object({ kind: z.literal('flood'), level: z.enum(FLOOD_LEVELS) }),
+  z.object({ kind: z.literal('phaseStart') }),
+  z.object({ kind: z.literal('beforeTribute') }),
+  z.object({
+    kind: z.literal('built'),
+    building: z.enum(BUILDING_IDS),
+  }),
+  z.object({ kind: z.literal('housesAtLeast'), count: positiveNumber }),
+  z.object({
+    kind: z.literal('busyWorkers'),
+    workerClass: z.enum(WORKER_CLASSES),
+    hours: positiveNumber,
+  }),
+  z.object({
+    kind: z.literal('priceAbove'),
+    resource: z.enum(RESOURCE_IDS),
+    factor: positiveNumber,
+  }),
+]);
 
 const expeditionSchema = z.object({
   id: z.string().min(1),
@@ -121,11 +299,13 @@ const expeditionSchema = z.object({
 const cardChoiceSchema = z.object({
   key: z.enum(CARD_CHOICE_KEYS),
   effectRaw: z.string(),
+  effects: z.array(cardEffectSchema),
 });
 
 const cardSchema = z.object({
   id: z.string().min(1),
   triggerRaw: z.string(),
+  trigger: cardTriggerSchema,
   phase: z.enum(CARD_PHASES),
   god: z.enum(GODS).nullable(),
   choices: z.array(cardChoiceSchema).min(1),
@@ -176,6 +356,7 @@ export const gameDataSchema = z
     parameters: parametersSchema,
     expeditions: z.array(expeditionSchema),
     cards: z.array(cardSchema).min(1),
+    gods: z.array(godSchema).min(1),
     map: z.array(mapSlotSchema),
     startingStocks: z.record(z.string(), nonNegativeNumber),
   })
@@ -205,6 +386,22 @@ export const gameDataSchema = z
       data.expeditions.map((item) => item.id),
       ['expeditions'],
     );
+    reportDuplicates(
+      context,
+      data.gods.map((item) => item.id),
+      ['gods'],
+    );
+
+    const knownGods = new Set<string>(data.gods.map((item) => item.id));
+    GODS.forEach((god) => {
+      if (!knownGods.has(god)) {
+        context.addIssue({
+          code: 'custom',
+          message: `missing god "${god}"`,
+          path: ['gods'],
+        });
+      }
+    });
 
     const knownResources = new Set<string>(
       data.resources.map((item) => item.id),

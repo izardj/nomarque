@@ -1,4 +1,4 @@
-import { GAME_DATA } from '@nomarque/data';
+import { GAME_DATA, type GameData } from '@nomarque/data';
 import { advance } from './advance';
 import { assignWorkers, build, foundNome } from './actions';
 import { catalogOf } from './catalog';
@@ -6,13 +6,17 @@ import { workforce } from './economy';
 import type { NomeState, ParcelState, RulesContext } from './state';
 
 const P = GAME_DATA.parameters;
+// Event cards are covered in cards.spec.ts; here they would blur the numbers.
+const DATA: GameData = { ...GAME_DATA, cards: [] };
 const good: RulesContext = {
-  data: GAME_DATA,
+  data: DATA,
   floods: ['good', 'good', 'good', 'good'],
+  seed: 'nome',
 };
 const low: RulesContext = {
-  data: GAME_DATA,
+  data: DATA,
   floods: ['low', 'good', 'good', 'good'],
+  seed: 'nome',
 };
 
 const hut = GAME_DATA.houses[0];
@@ -80,7 +84,7 @@ describe('advance', () => {
     const half = assignWorkers(
       foundNome(GAME_DATA),
       GAME_DATA,
-      8,
+      10,
       field.workers / 2,
     );
     if (!half.ok) {
@@ -102,11 +106,11 @@ describe('advance', () => {
   it('frees field workers during Akhet', () => {
     const catalog = catalogOf(GAME_DATA);
     const nome = foundNome(GAME_DATA);
-    expect(workforce(nome, catalog, 'akhet').classes.peasant.assigned).toBe(2);
-    expect(workforce(nome, catalog, 'peret').classes.peasant.assigned).toBe(
+    expect(workforce(nome, catalog, 0).classes.peasant.assigned).toBe(2);
+    expect(workforce(nome, catalog, 60).classes.peasant.assigned).toBe(
       2 + field.workers,
     );
-    expect(workforce(nome, catalog, 'peret').classes.peasant.available).toBe(
+    expect(workforce(nome, catalog, 60).classes.peasant.available).toBe(
       Math.floor(people * P.activityRate),
     );
   });
@@ -114,7 +118,7 @@ describe('advance', () => {
   it('prorates every assignment of a class when it exceeds the supply', () => {
     const catalog = catalogOf(GAME_DATA);
     let nome = foundNome(GAME_DATA);
-    for (const slot of [9, 10, 11]) {
+    for (const slot of [11, 12, 13]) {
       nome = withParcel(nome, {
         slot,
         building: 'farm_barley',
@@ -123,12 +127,12 @@ describe('advance', () => {
         buildEndsAt: null,
       });
     }
-    const work = workforce(nome, catalog, 'peret');
+    const work = workforce(nome, catalog, 60);
     const { available, assigned, ratio } = work.classes.peasant;
     expect(assigned).toBe(2 + 4 * field.workers);
     expect(ratio).toBeCloseTo(available / assigned, 12);
-    expect(work.occupancy.get(8)).toBeCloseTo(ratio, 12);
-    expect(work.occupancy.get(5)).toBeCloseTo(ratio, 12);
+    expect(work.occupancy.get(10)).toBeCloseTo(ratio, 12);
+    expect(work.occupancy.get(6)).toBeCloseTo(ratio, 12);
   });
 
   it('caps stocks at the storage capacity and reports the loss', () => {
@@ -143,7 +147,7 @@ describe('advance', () => {
     const nome = withParcel(
       { ...foundNome(GAME_DATA), stocks: { wheat: 1 } },
       {
-        slot: 7,
+        slot: 8,
         building: 'bakery',
         houses: null,
         workers: 3,
@@ -159,38 +163,38 @@ describe('advance', () => {
     const started = build(
       foundNome(GAME_DATA),
       GAME_DATA,
-      9,
+      11,
       { kind: 'building', building: 'farm_barley' },
       10,
     );
     if (!started.ok) {
       throw new Error(started.error);
     }
-    const parcel = started.state.parcels[9];
+    const parcel = started.state.parcels[11];
     expect(parcel.buildEndsAt).toBe(
       10 + catalogOf(GAME_DATA).building('farm_barley').buildHours,
     );
     const { state, report } = advance(started.state, 10, 20, good);
-    expect(report.completed).toEqual([9]);
-    expect(state.parcels[9].buildEndsAt).toBeNull();
+    expect(report.completed).toEqual([11]);
+    expect(state.parcels[11].buildEndsAt).toBeNull();
   });
 
   it('warns about a hut without water but never drops below level 1', () => {
     const nome = withParcel(foundNome(GAME_DATA), {
-      slot: 5,
+      slot: 6,
       building: 'well',
       houses: null,
       workers: 0,
       buildEndsAt: null,
     });
     const { state, report } = advance(nome, 0, 60, good);
-    expect(report.houseWarnings.map((w) => w.slot)).toEqual([4]);
-    expect(state.parcels[4].houses?.level).toBe(1);
+    expect(report.houseWarnings.map((w) => w.slot)).toEqual([5]);
+    expect(state.parcels[5].houses?.level).toBe(1);
   });
 
   it('raises a block of houses after 24 hours of met needs, lowers it after 48 missing', () => {
     let nome = foundNome(GAME_DATA);
-    // Slot 0 sits right above the huts (slot 4), within the temple's range.
+    // Slot 0 sits right above the huts (slot 5), within the temple's range.
     nome = withParcel(nome, {
       slot: 0,
       building: 'temple',
@@ -205,13 +209,13 @@ describe('advance', () => {
     // Grid point 6 opens the first cell; 24 hours later the huts move up.
     const up = advance(nome, 1, 31, good);
     expect(up.report.houseChanges).toEqual([
-      { slot: 4, at: 30, from: 1, to: 2 },
+      { slot: 5, at: 30, from: 1, to: 2 },
     ]);
 
     const starved = { ...up.state, stocks: { wheat: 150 } };
     const down = advance(starved, 31, 31 + 60, good);
     expect(down.report.houseChanges).toEqual([
-      { slot: 4, at: 78, from: 2, to: 1 },
+      { slot: 5, at: 78, from: 2, to: 1 },
     ]);
   });
 });

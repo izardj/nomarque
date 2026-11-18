@@ -1,5 +1,4 @@
-import { GAME_DATA } from '@nomarque/data';
-import { REIGN_YEARS, reignLengthHours, toRealMs } from '@nomarque/rules';
+import { createReign } from './create-reign';
 import type { PrismaClient, Reign, ReignStatus, World } from './prisma';
 
 export interface SeedWorldOptions {
@@ -67,35 +66,7 @@ export async function seedWorld(
       return { world, reign: active, created: false };
     }
 
-    const highest = await tx.reign.aggregate({
-      where: { worldId: world.id },
-      _max: { number: true },
-    });
-    const number = (highest._max.number ?? 0) + 1;
-    const startsAt = options.reignStartsAt;
-    const endsAt = new Date(
-      startsAt.getTime() +
-        toRealMs(reignLengthHours(GAME_DATA.parameters), world.speed),
-    );
-    const reign = await tx.reign.create({
-      data: {
-        worldId: world.id,
-        number,
-        dataVersion: GAME_DATA.version,
-        status: startsAt.getTime() <= now.getTime() ? 'RUNNING' : 'SCHEDULED',
-        startsAt,
-        endsAt,
-      },
-    });
-    await tx.nileYear.createMany({
-      data: Array.from({ length: REIGN_YEARS }, (_, index) => ({
-        reignId: reign.id,
-        index,
-        floodLevel: 'GOOD' as const,
-        // Flood draws arrive with the Nile cycle (milestone J2).
-        revealedAt: null,
-      })),
-    });
+    const reign = await createReign(tx, world, options.reignStartsAt, now);
     return { world, reign, created: true };
   });
 }

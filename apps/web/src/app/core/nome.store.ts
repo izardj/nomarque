@@ -10,6 +10,7 @@ import type {
   BuildRequest,
   NomeStateResponse,
 } from '@nomarque/contracts';
+import type { BuildingId, CardChoiceKey, God } from '@nomarque/data';
 import { type Observable, firstValueFrom } from 'rxjs';
 import { ApiService, isApiErrorDto, toApiError } from './api.service';
 import { errorMessage } from './error-message';
@@ -44,6 +45,12 @@ export class NomeStore {
     const failure = this.failure();
     return failure === null ? null : errorMessage(failure);
   });
+  /** True once the reign is over: every action is refused by the server. */
+  readonly reignOver = computed(
+    () => this.stateSignal()?.nome.reign.over ?? false,
+  );
+  /** Event cards waiting for a choice. */
+  readonly pendingCards = computed(() => this.nome()?.cards ?? []);
   /** True while a request is on its way. */
   readonly busy = computed(() => this.inFlight() > 0);
   /** Worker counts tapped by the player and not yet confirmed by the server. */
@@ -70,6 +77,18 @@ export class NomeStore {
 
   build(slot: number, request: BuildRequest): Promise<boolean> {
     return this.run((id) => this.api.build(id, slot, request));
+  }
+
+  chooseCard(drawId: number, choice: CardChoiceKey): Promise<boolean> {
+    return this.run((id) => this.api.chooseCard(id, drawId, { choice }));
+  }
+
+  makeOffering(god: God): Promise<boolean> {
+    return this.run((id) => this.api.makeOffering(id, { god }));
+  }
+
+  chooseCrop(slot: number, crop: BuildingId): Promise<boolean> {
+    return this.run((id) => this.api.chooseCrop(id, slot, { crop }));
   }
 
   /** Marks the report as read. */

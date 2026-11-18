@@ -126,7 +126,7 @@ Validation : le test de propriété d'`advance` est vert.
 - **Maisons** : jugées aux points de la grille (toutes les 6 h) sur la case écoulée. Une parcelle livrée en cours de case n'est jugée qu'à partir de la case suivante.
   - Montée : besoins du niveau couverts, services du niveau suivant à portée, et chaque ressource du niveau suivant en stock, pendant 24 h. Interprétation de « tous les besoins couverts » qui évite qu'une maison monte puis redescende aussitôt.
   - Descente : un besoin manquant pendant 24 h donne un avertissement, pendant 48 h une descente. Jamais sous le niveau 1. Villa exclue (hors MVP).
-- **Services** : actifs dès qu'un ouvrier y travaille. Le temple doit en plus avoir reçu tout son pain sur la case. Portée = distance de Chebyshev sur la grille ≤ `portee_parcelles`. La maquette montre un temple (portée 2) qui ne couvre que les voisines immédiates : à trancher.
+- **Services** : actifs dès qu'un ouvrier y travaille. Le temple doit en plus avoir reçu tout son pain sur la case. Portée = distance de Chebyshev sur la grille ≤ `portee_parcelles` (remplacée en J2, voir plus bas).
 - **Champs** : pendant Akhet, ils ne demandent pas d'ouvriers. Récolte à 120 h = sortie annuelle × occupation moyenne pendant Peret × multiplicateur de crue. Tribut à 166 h : 10 % des céréales (blé, orge) récoltées dans l'année, plafonné au stock.
 - **Impôts** : continus, par habitant, sans condition de besoins.
 - **Main-d'œuvre** : ouvriers disponibles d'une classe = ⌊habitants × taux d'activité⌋. Un îlot de maisons ne fournit que la classe de son niveau.
@@ -139,3 +139,51 @@ Validation : le test de propriété d'`advance` est vert.
   - même carte pour toutes les régions : l'effet des régions attend J3.
 - **Routes** : la spec écrit `/nomes/me`, mais un joueur peut avoir un nome par monde. Les routes du nome vivent donc sous `/worlds/:id/nome/…`.
 - **Rapport de l'intendant** : accumulé dans `Nome.pendingReport` depuis le dernier « C'est noté » (`POST …/report/ack`).
+
+### 2026-11-18 — J2 · Cycle du Nil
+
+- PR de J0 et J1 toujours ouvertes ; J2 se construit sur `milestone/j2`, branchée sur `milestone/j1`.
+- Réponses du joueur au rapport de J1 : valeurs provisoires non testées (gardées), portée « le mieux possible » avec une carte plus grande, régions sans avis, rouleaux selon la recommandation d'Opus, pas de fournisseur d'e-mail pour l'instant.
+
+#### Décisions
+
+- **Carte 5 × 4 = 20 parcelles**, le maximum du GDD (« 12 à 20 parcelles »). La cité simulée de `batiments.csv` (`nombre_simu`) compte 28 bâtiments et 7 îlots : elle ne tient pas sur la carte, ce qui garde la tension « une maison sur la terre noire n'est plus un champ ».
+- **Portée en pas orthogonaux** : une portée de 1 couvre la parcelle et ses quatre voisines (« sa parcelle et les parcelles voisines » du GDD), sans les diagonales. Le temple (portée 2) couvre un losange de 13 parcelles au lieu de toute la carte.
+- **Rouleaux** : 20 rouleaux au départ (`stocks_depart.csv`) amorcent la boucle scribes ↔ maisons de niveau 3 avant les greniers royaux de J3.
+- **E-mail** : le mailer de dev (lien dans les journaux de l'API) reste le seul transport.
+- **Régions** : toujours sans effet ; Opus proposera des valeurs chiffrées au début de J3.
+- **Cartes d'événement** (Opus, `libs/rules/src/lib/cards.ts`) :
+  - tirées dans `advance` à instants fixes (toutes les 8 h de jeu), avec un générateur initialisé par l'id du nome et le numéro du tirage : le tirage ne dépend pas des connexions, le test de propriété le couvre ;
+  - une carte au plus une fois par année du Nil, 3 en attente au maximum ; poids 3 pour une carte à déclencheur d'état, 1 pour « Aléatoire », 0,2 pour « Rare » ;
+  - choix par défaut appliqué à l'expiration (24 h), coûts plafonnés à ce que le nome possède ; un choix du joueur dont les coûts certains dépassent les stocks est refusé (`cannot_afford`) ;
+  - « Tutoriel » (C01) et « Prix du pain » (C28) ne sont jamais tirés en J2 : ils attendent le tutoriel (J4) et le marché (J3) ;
+  - « Paysans occupés à 100 % depuis 48 h » : tous les paysans disponibles affectés, mesuré sur la grille de 6 h ;
+  - « une maison : montée bloquée » s'applique à tous les îlots ; « grenier inaccessible » ne réduit pas la capacité (le stockage est passif) ;
+  - « production −N % pendant H h » se lit comme une baisse des ouvriers de toutes les classes : un atelier à l'arrêt ne consomme pas ses entrées ;
+  - C17 « dieu du temple −10 » (aucun dieu du temple parmi les cinq) devient « tous les dieux −2 » dans `cartes.csv`.
+- **Dieux** (Opus, `gods.ts`) : jauge de 0 à 100, départ 50, baisse continue de 0,1/h (compensée par un temple actif, +0,1/h à chaque dieu), une offrande par 24 h (+10, coût dans `dieux.csv`). Bénédictions à 70 : Hâpy adoucit la crue basse (0,8 au lieu de 0,6), Osiris +10 % de récolte (−10 % s'il est négligé, sous 30), Bastet fait monter les maisons en 18 h au lieu de 24. Hâpy négligé : la crue haute perd son bonus. Thot et Sekhmet n'agissent que par leurs cartes en J2 (contrats en J3).
+- **Faveur royale** : +0,2 par unité de tribut payée, −0,5 par unité manquante ; seuil « élevée » à 50.
+- **Cultures** : un champ peut changer de céréale pendant Akhet, gratuitement ; verrouillé à l'heure 48.
+- **Fin de règne** : trois classements figés (richesse = deben + stocks au prix de référence, piété = somme des faveurs, faveur royale), ex æquo au même rang, prestige 10/6/3 puis 1 de participation. Table `ReignRanking`.
+- Toutes ces valeurs sont « Provisoire J2 » dans `parametres.csv` et `dieux.csv`.
+- Import des cartes et des dieux (DeepSeek) accepté sans retouche : grammaire des effets et des déclencheurs, 115 tests.
+- API du nome J2 (Sonnet) acceptée ; Opus a corrigé le contrat (`ReignDto` déclaré deux fois, renommé `NomeReignDto`) et ajouté `drawnAt` aux cartes appliquées par défaut. 56 tests.
+- Écrans Cartes, Dieux (avec le panneau du Nil), choix des cultures, ajouts au rapport, bandeau de fin de règne (Sonnet) acceptés ; Opus a corrigé une donnée de test et le contraste des boutons désactivés (opacité remplacée par des couleurs, 7:1). 195 tests.
+- Worker (Sonnet) accepté : file BullMQ `reign` (`reign.start`, `nile.phase`, `reign.end`), réconciliation au démarrage, traitements idempotents. La sauvegarde d'un nome est extraite dans `libs/nome-store`, partagée par l'API et le worker. 14 tests.
+- Tirage des crues (Opus) : `drawFloods(reignId)` dans `libs/rules`, 25 % basse, 20 % haute (provisoire). Le worker avait gardé quatre crues bonnes en attendant.
+- Aucune escalade.
+
+#### Décisions (suite)
+
+- Ids des jobs BullMQ séparés par `_` (BullMQ refuse `:`).
+- Funérailles : `FUNERALS_HOURS = 24` dans le worker, dérivé de la fin de la dernière année.
+- Fin de règne : le joueur n'a plus de nome dans le règne suivant tant qu'il ne l'a pas rejoint. L'écran de résultats du règne terminé (classements, prestige) arrive avec les classements (J4) ; d'ici là le joueur retombe sur « rejoindre un monde ».
+- Rattrapage : après un long arrêt, le worker enchaîne les règnes en retard d'un monde (vu sur le monde de test des tests `db`, 80 règnes de 4 jours depuis janvier). Comportement voulu, à surveiller en bêta.
+- Les tests de l'API, du worker et de `db` partagent la base de dev.
+
+#### Validation de J2
+
+- Simulation d'un règne complet (`nx run reign-sim:simulate`) : 4 joueurs robots via l'API HTTP, API et worker réels, monde accéléré (règne de 10 minutes, vitesse 4032). 1 269 requêtes, 0 erreur HTTP, 0 erreur dans les journaux de l'API et du worker. 185 cartes tranchées, 101 offrandes, 33 constructions, 29 changements de culture. Le worker a clos le règne : nomes avancés à l'heure 672, 12 lignes de classement, prestige versé, crues révélées, règne suivant créé.
+- La spec demande un règne en 4 jours à la vitesse 7 : la simulation accélérée prouve le même parcours ; le règne réel de 4 jours reste à lancer sur un serveur.
+- Suite complète : test, lint et build verts sur les 10 projets.
+- Captures à 390 px dans `docs/img/j2/` (rapport, carte, dieux, champ).

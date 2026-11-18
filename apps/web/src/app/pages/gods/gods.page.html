@@ -1,0 +1,79 @@
+<h1 class="title">{{ t.title }}</h1>
+
+@if (nileInfo(); as info) {
+<section class="surface nile" aria-labelledby="nile-title">
+  <h2 id="nile-title" class="nile__title">{{ nile.title }}</h2>
+  <p class="nile__year">{{ info.yearAndPhase }}</p>
+  <p>{{ info.flood }}</p>
+  @if (info.nextFlood) {
+  <p>{{ info.nextFlood }}</p>
+  }
+  <p class="secondary">{{ info.crops }}</p>
+</section>
+
+<ul class="gods" [attr.aria-label]="t.listLabel">
+  @for (god of gods(); track god.god) {
+  <li class="god surface">
+    <div class="god__head">
+      <div>
+        <div class="god__name">{{ god.name }}</div>
+        <div class="god__domain">{{ god.domain }}</div>
+      </div>
+      <div class="god__standing god__standing--{{ god.standing }}">
+        {{ god.standingLabel }}
+      </div>
+    </div>
+
+    <div
+      class="gauge"
+      role="meter"
+      [attr.aria-label]="t.gauge(god.name)"
+      aria-valuemin="0"
+      [attr.aria-valuemax]="god.gauge.max"
+      [attr.aria-valuenow]="god.gauge.value"
+      [attr.aria-valuetext]="god.gauge.valueText"
+    >
+      <div
+        class="gauge__fill gauge__fill--{{ god.standing }}"
+        [style.width.%]="god.gauge.percent"
+      ></div>
+      <div class="gauge__mark" [style.left.%]="god.gauge.lowAt"></div>
+      <div class="gauge__mark" [style.left.%]="god.gauge.blessingAt"></div>
+    </div>
+    <div class="gauge__text">
+      <span>{{ god.gauge.valueText }}</span>
+    </div>
+
+    <button
+      class="btn btn--primary offer"
+      type="button"
+      [attr.aria-label]="god.offering.ariaLabel"
+      [disabled]="god.offering.disabled || busy()"
+      (click)="offer(god.god)"
+    >
+      {{ god.offering.label }}
+    </button>
+    @if (god.offering.reason) {
+    <p class="god__reason">{{ god.offering.reason }}</p>
+    }
+  </li>
+  }
+</ul>
+<p class="legend">{{ thresholds }}</p>
+
+<section class="surface" aria-labelledby="modifiers-title">
+  <h2 id="modifiers-title" class="section-title">{{ t.modifiersTitle }}</h2>
+  @if (modifiers().length === 0) {
+  <p class="secondary">{{ t.modifiersEmpty }}</p>
+  } @else {
+  <ul class="modifiers">
+    @for (modifier of modifiers(); track modifier.key) {
+    <li class="modifier">
+      <span>{{ modifier.text }}</span>
+      <span class="modifier__until">{{ modifier.until }}</span>
+    </li>
+    }
+  </ul>
+  }
+</section>
+}

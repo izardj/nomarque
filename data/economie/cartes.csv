@@ -15,7 +15,7 @@ C13,Le percepteur zélé,Avant le tribut,Shemu,,Le percepteur royal veut compter
 C14,Un hippopotame,Champ d'orge construit,Toutes,,Un hippopotame a élu domicile dans le champ d'orge.,Organiser une chasse,paysans -4 pendant 6 h ; deben +20,Le laisser brouter,orge -15,,,B
 C15,Le potier inventif,Potier construit,Toutes,Thot,Ton potier a inventé un tour plus rapide.,Financer l'atelier,deben -60 ; poterie +20 % jusqu'à la fin de l'année,Le féliciter,Thot +5,,,B
 C16,Querelle de voisins,3 maisons ou plus,Toutes,,Deux familles se disputent une parcelle.,Trancher pour l'aînée,une maison : montée de niveau bloquée 24 h,Partager la parcelle,deben -10,,,B
-C17,Le grand prêtre ambitieux,Temple construit,Toutes,,Le grand prêtre réclame un temple plus grand.,Accepter,deben -100 ; tous les dieux +5,Refuser,dieu du temple -10,,,B
+C17,Le grand prêtre ambitieux,Temple construit,Toutes,,Le grand prêtre réclame un temple plus grand.,Accepter,deben -100 ; tous les dieux +5,Refuser,tous les dieux -2,,,B
 C18,Un capitaine de Byblos,Port construit,Toutes,,Un capitaine propose du cèdre contre du lin tissé.,Échanger,lin tissé -10 ; cèdre +8,Refuser,rien,,,B
 C19,Pillards du désert,Carrière construite,Toutes,,Des pillards rôdent près de la carrière.,Engager des gardes,deben -50,Fermer la carrière,carrière inactive 24 h,Tenter sa chance,40 % : calcaire -40,B
 C20,Un enfant prodige,École construite,Toutes,Thot,Un élève de l'école calcule plus vite que les scribes.,En faire un scribe,scribes +1,Le renvoyer aux champs,paysans +1,,,A

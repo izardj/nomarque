@@ -1,4 +1,11 @@
-import { nomeState, EMPTY_REPORT, NOME_STATE } from '../../core/testing';
+import {
+  BUSY_REPORT,
+  EMPTY_REPORT,
+  NOME_STATE,
+  PENDING_CARD,
+  nomeState,
+  withNome,
+} from '../../core/testing';
 import { setupScreen } from '../../core/screen-testing';
 import { fr } from '../../i18n/fr';
 import { ReportPage } from './report.page';
@@ -102,5 +109,91 @@ describe('ReportPage', () => {
 
     expect(api.ackReport).toHaveBeenCalledWith('w1');
     expect(text(el)).toContain(fr.report.emptyTitle);
+  });
+});
+
+describe('ReportPage cards and royal favour', () => {
+  it('shows the change of the royal favour', async () => {
+    const { el } = await setupScreen(ReportPage);
+    expect(text(el)).toContain('−3 faveur royale');
+  });
+
+  it('shows a gain of royal favour as a gain', async () => {
+    const state = nomeState({
+      report: { ...BUSY_REPORT, royalFavor: 4 },
+    });
+    const { el } = await setupScreen(ReportPage, state);
+
+    const gain = el.querySelector('.tally__amount--gain:last-of-type');
+    expect(text(el)).toContain('+4 faveur royale');
+    expect(gain).not.toBeNull();
+  });
+
+  it('skips a royal favour change that rounds to zero', async () => {
+    const state = nomeState({
+      report: { ...BUSY_REPORT, royalFavor: 0.2 },
+    });
+    const { el } = await setupScreen(ReportPage, state);
+    expect(text(el)).not.toContain('faveur royale');
+  });
+
+  it('tells which cards were dealt and which Méri settled by default', async () => {
+    const { el } = await setupScreen(ReportPage);
+
+    expect(text(el)).toContain('Nouvelle carte : Le chat sacré.');
+    expect(text(el)).toContain(
+      'Sans réponse de ta part, Méri a tranché pour « Le scribe indélicat » : Le renvoyer.',
+    );
+  });
+
+  it('is not empty when only a card was dealt', async () => {
+    const state = nomeState({
+      report: {
+        ...EMPTY_REPORT,
+        cardsDealt: [{ drawId: 9, cardId: 'C05', at: 101 }],
+      },
+    });
+    const { el } = await setupScreen(ReportPage, state);
+
+    expect(text(el)).toContain('Nouvelle carte : Les criquets.');
+    expect(text(el)).not.toContain(fr.report.emptyTitle);
+  });
+
+  it('links to the cards screen when cards are pending', async () => {
+    const state = withNome({ cards: [PENDING_CARD] });
+    const { el } = await setupScreen(ReportPage, state);
+    const link = el.querySelector<HTMLAnchorElement>('.card--cards a');
+
+    expect(text(el)).toContain('1 décision attend ta réponse');
+    expect(link?.getAttribute('href')).toBe('/worlds/w1/nome/cartes');
+  });
+
+  it('links to the cards screen even when the report itself is empty', async () => {
+    const state = withNome({ cards: [PENDING_CARD] });
+    const { el } = await setupScreen(ReportPage, {
+      ...state,
+      report: EMPTY_REPORT,
+    });
+
+    expect(text(el)).toContain(fr.report.emptyTitle);
+    expect(el.querySelector('.card--cards a')).not.toBeNull();
+  });
+
+  it('has no link without pending card', async () => {
+    const { el } = await setupScreen(ReportPage);
+    expect(el.querySelector('.card--cards')).toBeNull();
+  });
+});
+
+describe('ReportPage when the reign is over', () => {
+  it('disables the acknowledge button', async () => {
+    const state = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { el } = await setupScreen(ReportPage, state);
+
+    expect(el.querySelector<HTMLButtonElement>('button.ack')?.disabled).toBe(
+      true,
+    );
   });
 });

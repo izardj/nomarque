@@ -5,16 +5,17 @@ import {
   type FloodLevel as DbFloodLevel,
   type Region,
 } from '@nomarque/db';
+import { GAME_DATA } from '@nomarque/data';
 import {
-  emptyRulesState,
+  restoreRulesState,
   type AdvanceReport,
+  type CardDealt,
   type NomeState,
   type ReignClock,
   type ResourceAmounts,
   type RulesState,
 } from '@nomarque/rules';
-import { z } from 'zod';
-import { findCurrentReign, findWorld } from '../worlds/world-queries';
+import { findCurrentReign, findWorld } from './world-queries';
 import {
   isResourceId,
   parcelColumns,
@@ -44,10 +45,17 @@ export interface NomeContext {
 /** What changes with the actions of the player. */
 export interface StoredNome {
   state: NomeState;
-  favor: number;
   /** Game hour up to which the state is computed. */
   computedAt: number;
   pendingReport: AdvanceReport | null;
+}
+
+/** A card whose choice applied, identified like its row of the history. */
+export interface SettledCard {
+  cardId: string;
+  drawnAt: number;
+  choice: string;
+  resolvedAt: number;
 }
 
 type Tx = Prisma.TransactionClient;
@@ -72,10 +80,6 @@ export class NomesRepository {
     if (!nome) {
       return null;
     }
-    const years = await tx.nileYear.findMany({
-      where: { reignId: reign.id },
-      orderBy: { index: 'asc' },
-    });
     return {
       id: nome.id,
       name: nome.name,
@@ -83,8 +87,17 @@ export class NomesRepository {
       dynastyName: nome.dynasty.name,
       dataVersion: reign.dataVersion,
       clock: { startsAtMs: reign.startsAt.getTime(), speed: world.speed },
-      floods: years.map((year) => FLOOD_FROM_DB[year.floodLevel]),
+      floods: await this.floods(tx, reign.id),
     };
+  }
+
+  /** Flood of each Nile year of the reign, by zero-based year. */
+  async floods(tx: Tx, reignId: string): Promise<FloodLevel[]> {
+    const years = await tx.nileYear.findMany({
+      where: { reignId },
+      orderBy: { index: 'asc' },
+    });
+    return years.map((year) => FLOOD_FROM_DB[year.floodLevel]);
   }
 
   /** Holds the nome row until the transaction ends: its actions queue up. */
@@ -108,11 +121,15 @@ export class NomesRepository {
     return {
       state: {
         deben: nome.deben,
+        favor: nome.favor,
         stocks: amounts,
         parcels: parcels.map(rowToParcel),
-        rules: rulesStateOf(nome.rulesState),
+        // Older rows hold `{}` or lack the fields added since.
+        rules: restoreRulesState(
+          nome.rulesState as Partial<RulesState> | null,
+          GAME_DATA,
+        ),
       },
-      favor: nome.favor,
       computedAt: nome.computedAt,
       pendingReport: nome.pendingReport
         ? (nome.pendingReport as unknown as AdvanceReport)
@@ -133,6 +150,7 @@ export class NomesRepository {
       where: { id: nomeId },
       data: {
         deben: after.deben,
+        favor: after.favor,
         rulesState: toJson(after.rules),
         computedAt,
         pendingReport: pendingReport ? toJson(pendingReport) : Prisma.DbNull,
@@ -148,6 +166,37 @@ export class NomesRepository {
       }
     }
     await this.saveStocks(tx, nomeId, before.stocks, after.stocks);
+  }
+
+  /** History of the cards dealt; a card already recorded is left alone. */
+  async recordCardsDealt(
+    tx: Tx,
+    nomeId: string,
+    dealt: readonly CardDealt[],
+    graceHours: number,
+  ): Promise<void> {
+    for (const card of dealt) {
+      const key = { nomeId, cardId: card.cardId, drawnAt: card.at };
+      await tx.eventCardDraw.upsert({
+        where: { nomeId_cardId_drawnAt: key },
+        create: { ...key, expiresAt: card.at + graceHours },
+        update: {},
+      });
+    }
+  }
+
+  /** Marks cards of the history as settled, by the player or by default. */
+  async recordCardsSettled(
+    tx: Tx,
+    nomeId: string,
+    settled: readonly SettledCard[],
+  ): Promise<void> {
+    for (const { cardId, drawnAt, choice, resolvedAt } of settled) {
+      await tx.eventCardDraw.updateMany({
+        where: { nomeId, cardId, drawnAt },
+        data: { choice, resolvedAt },
+      });
+    }
   }
 
   /** Creates the parcels and stocks of a freshly founded nome. */
@@ -184,14 +233,4 @@ export class NomesRepository {
       await tx.stock.deleteMany({ where: { nomeId, resource: { in: gone } } });
     }
   }
-}
-
-const emptyObjectSchema = z.object({}).strict();
-
-/** `{}` is the column default of a nome that rules never touched. */
-function rulesStateOf(json: Prisma.JsonValue): RulesState {
-  if (emptyObjectSchema.safeParse(json).success) {
-    return emptyRulesState();
-  }
-  return json as unknown as RulesState;
 }

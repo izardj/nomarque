@@ -1,7 +1,7 @@
 import { throwError } from 'rxjs';
 import { WORKERS_DEBOUNCE_MS } from '../../core/nome.store';
 import { setupScreen } from '../../core/screen-testing';
-import { NOME_STATE, nomeState } from '../../core/testing';
+import { NOME_STATE, nomeState, withNome } from '../../core/testing';
 import { fr } from '../../i18n/fr';
 import { WorkersPage } from './workers.page';
 
@@ -209,5 +209,18 @@ describe('WorkersPage', () => {
     expect(el.querySelector('a')?.getAttribute('href')).toBe(
       '/worlds/w1/nome/cite',
     );
+  });
+
+  it('disables every stepper when the reign is over', async () => {
+    const state = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { el } = await setupScreen(WorkersPage, state);
+
+    const steppers = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('.step'),
+    );
+    expect(steppers.length).toBeGreaterThan(0);
+    expect(steppers.every((step) => step.disabled)).toBe(true);
   });
 });

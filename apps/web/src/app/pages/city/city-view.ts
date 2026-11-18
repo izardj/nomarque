@@ -1,5 +1,10 @@
 import type { BuildRequest, NomeDto, ParcelDto } from '@nomarque/contracts';
-import { GAME_DATA, type BuildingDef, type Zone } from '@nomarque/data';
+import {
+  GAME_DATA,
+  type BuildingDef,
+  type BuildingId,
+  type Zone,
+} from '@nomarque/data';
 import {
   buildingDef,
   buildingLabel,
@@ -22,6 +27,15 @@ export interface Tile {
   selected: boolean;
   /** Covered by the service of the selected building. */
   inRange: boolean;
+}
+
+export interface CropOption {
+  building: BuildingId;
+  name: string;
+  /** What the field yields, in a few words. */
+  detail: string;
+  /** The crop the field grows now. */
+  current: boolean;
 }
 
 export interface BuildChoice {
@@ -61,7 +75,7 @@ export function buildingSummary(def: BuildingDef): string {
   return fr.city.kinds[def.kind];
 }
 
-/** Parcels within `range` cells of `center`, diagonals included. */
+/** Parcels within `range` orthogonal steps of `center`, diagonals excluded. */
 export function slotsInRange(
   parcels: readonly ParcelDto[],
   center: ParcelDto,
@@ -69,10 +83,8 @@ export function slotsInRange(
 ): ReadonlySet<number> {
   const slots = new Set<number>();
   for (const parcel of parcels) {
-    const distance = Math.max(
-      Math.abs(parcel.row - center.row),
-      Math.abs(parcel.col - center.col),
-    );
+    const distance =
+      Math.abs(parcel.row - center.row) + Math.abs(parcel.col - center.col);
     if (parcel.slot !== center.slot && distance <= range) {
       slots.add(parcel.slot);
     }
@@ -90,6 +102,30 @@ export function selectedRange(
   }
   const { range } = buildingDef(selected.building);
   return range === null ? new Set() : slotsInRange(parcels, selected, range);
+}
+
+/** A finished field: the only parcel whose crop can change. */
+export function isFinishedField(parcel: ParcelDto): boolean {
+  return (
+    parcel.building !== null &&
+    !isSite(parcel) &&
+    buildingDef(parcel.building).kind === 'field'
+  );
+}
+
+/** The crops a finished field may grow: the fields its zone allows. */
+export function cropOptions(parcel: ParcelDto): CropOption[] {
+  if (!isFinishedField(parcel)) {
+    return [];
+  }
+  return GAME_DATA.buildings
+    .filter((def) => def.kind === 'field' && def.zones.includes(parcel.zone))
+    .map((def) => ({
+      building: def.id,
+      name: buildingLabel(def.id),
+      detail: buildingSummary(def),
+      current: def.id === parcel.building,
+    }));
 }
 
 function tileKind(parcel: ParcelDto): TileKind {

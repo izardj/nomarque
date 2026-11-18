@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ClockModule } from '../common/clock';
+import { ConfigModule } from '../config/config.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ReignModule } from '../reign/reign.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [ConfigModule, ClockModule, PrismaModule, ReignModule],
 })
 export class AppModule {}

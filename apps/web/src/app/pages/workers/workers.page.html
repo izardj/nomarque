@@ -43,7 +43,7 @@
       class="step"
       type="button"
       [attr.aria-label]="row.removeLabel"
-      [disabled]="row.workers <= 0"
+      [disabled]="row.workers <= 0 || reignOver()"
       (click)="step(row, -1)"
     >
       −
@@ -53,7 +53,7 @@
       class="step"
       type="button"
       [attr.aria-label]="row.addLabel"
-      [disabled]="row.workers >= row.required"
+      [disabled]="row.workers >= row.required || reignOver()"
       (click)="step(row, 1)"
     >
       +

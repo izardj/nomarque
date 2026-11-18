@@ -95,7 +95,10 @@ function required<T>(value: T | undefined, message: string): T {
   return value;
 }
 
-/** Chebyshev distance between two parcels of the map. */
+/**
+ * Distance between two parcels in orthogonal steps: a range of 1 covers the
+ * parcel and its four neighbours, diagonals excluded.
+ */
 export function parcelDistance(a: MapSlotDef, b: MapSlotDef): number {
-  return Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }

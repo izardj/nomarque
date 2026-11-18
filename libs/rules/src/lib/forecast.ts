@@ -5,6 +5,8 @@ import type { FloodLevel, GameData, ResourceId } from '@nomarque/data';
 import { NILE_CALENDAR, phaseAt } from './calendar';
 import { catalogOf } from './catalog';
 import { flows, storageCapacity, workforce, type Workforce } from './economy';
+import { floodMultiplier, osirisShare } from './gods';
+import { factor } from './modifiers';
 import { addAmount } from './report';
 import type { NomeState, ResourceAmounts } from './state';
 
@@ -34,14 +36,20 @@ export function forecast(
   flood: FloodLevel,
 ): NomeForecast {
   const catalog = catalogOf(data);
-  const { yearHours, floodMultiplier } = data.parameters;
-  const { phase, hourOfYear } = phaseAt(at, yearHours);
-  const work = workforce(state, catalog, phase);
+  const params = data.parameters;
+  const { phase, hourOfYear } = phaseAt(at, params.yearHours);
+  const work = workforce(state, catalog, at);
   const capacity = storageCapacity(state, catalog, work);
   const f = flows(state, catalog, work, capacity);
-  // Fields are judged on Peret: outside Akhet their occupancy is the same.
+  // Fields are judged on Peret: during Akhet, read them at its start.
   const peretWork =
-    phase === 'akhet' ? workforce(state, catalog, 'peret') : work;
+    phase === 'akhet'
+      ? workforce(state, catalog, at - hourOfYear + NILE_CALENDAR.akhetEndsAt)
+      : work;
+  const harvestMultiplier =
+    floodMultiplier(state, params, flood) *
+    factor(state.rules.harvestPercent) *
+    (1 + osirisShare(state, params));
   const peretHours = NILE_CALENDAR.peretEndsAt - NILE_CALENDAR.akhetEndsAt;
 
   const parcels: ParcelForecast[] = [];
@@ -65,7 +73,7 @@ export function forecast(
             harvest,
             out.resource,
             ((out.perYear * (accumulated + s * remaining)) / peretHours) *
-              floodMultiplier[flood],
+              harvestMultiplier,
           );
         }
       }

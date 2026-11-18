@@ -1,0 +1,146 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  margin: 4px 4px 0;
+}
+
+.nile {
+  gap: 4px;
+  border-left: 6px solid var(--color-nile);
+}
+
+.nile__title,
+.section-title {
+  font-size: 19px;
+}
+
+.nile__year {
+  font-weight: 600;
+}
+
+.gods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.god__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.god__name {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.god__domain {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.god__standing {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.god__standing--blessing {
+  color: var(--color-malachite);
+}
+
+.god__standing--low {
+  color: var(--color-gold-text);
+}
+
+.god__standing--veryLow {
+  color: var(--color-red-ochre);
+}
+
+/* The gauge: a flat fill, with a tick at each favour threshold. */
+.gauge {
+  position: relative;
+  height: 12px;
+  border: 1px solid var(--color-carbon);
+  border-radius: 6px;
+  background: var(--color-papyrus);
+  overflow: hidden;
+}
+
+.gauge__fill {
+  height: 100%;
+  background: var(--color-text-secondary);
+}
+
+.gauge__fill--blessing {
+  background: var(--color-malachite);
+}
+
+.gauge__fill--low {
+  background: var(--color-gold);
+}
+
+.gauge__fill--veryLow {
+  background: var(--color-red-ochre);
+}
+
+.gauge__mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-carbon);
+}
+
+.gauge__text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.offer {
+  width: 100%;
+}
+
+.god__reason {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-red-ochre);
+}
+
+.legend {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.modifiers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modifier {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.modifier__until {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

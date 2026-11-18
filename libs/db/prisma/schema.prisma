@@ -47,6 +47,13 @@ enum Zone {
   RIVER
 }
 
+/// Rankings frozen at the end of a reign (J2: wealth, piety, royal favour).
+enum RankingCategory {
+  WEALTH
+  PIETY
+  ROYAL_FAVOR
+}
+
 enum OrderSide {
   BUY
   SELL
@@ -169,10 +176,11 @@ model Reign {
   monumentProgress Float       @default(0)
   createdAt        DateTime    @default(now())
 
-  world       World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  world       World          @relation(fields: [worldId], references: [id], onDelete: Cascade)
   nileYears   NileYear[]
   nomes       Nome[]
   royalOrders RoyalOrder[]
+  rankings    ReignRanking[]
 
   @@unique([worldId, number])
 }
@@ -193,6 +201,25 @@ model NileYear {
 // ---------------------------------------------------------------------------
 // Nome state
 // ---------------------------------------------------------------------------
+
+/// One line of a frozen ranking: written once, by the reign.end job.
+model ReignRanking {
+  id       String          @id @default(uuid()) @db.Uuid
+  reignId  String          @db.Uuid
+  category RankingCategory
+  nomeId   String          @db.Uuid
+  /// 1 for the first; equal scores share a rank.
+  rank     Int
+  score    Float
+  /// Prestige the dynasty earned with this line.
+  prestige Int
+
+  reign Reign @relation(fields: [reignId], references: [id], onDelete: Cascade)
+  nome  Nome  @relation(fields: [nomeId], references: [id], onDelete: Cascade)
+
+  @@unique([reignId, category, nomeId])
+  @@index([reignId, category, rank])
+}
 
 /// One city for one reign.
 model Nome {
@@ -225,6 +252,7 @@ model Nome {
   cardDraws       EventCardDraw[]
   expeditions     Expedition[]
   actionLogs      ActionLog[]
+  rankings        ReignRanking[]
 
   @@unique([reignId, dynastyId])
 }

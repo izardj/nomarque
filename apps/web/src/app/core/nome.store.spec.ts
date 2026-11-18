@@ -4,13 +4,16 @@ import { type Observable, Subject, of, throwError } from 'rxjs';
 import { fr } from '../i18n/fr';
 import { ApiService } from './api.service';
 import { NomeStore, WORKERS_DEBOUNCE_MS } from './nome.store';
-import { NOME_STATE, nomeState } from './testing';
+import { NOME_STATE, nomeState, withNome } from './testing';
 
 type Calls = Partial<{
   getNomeState: () => Observable<NomeStateResponse>;
   build: () => Observable<NomeStateResponse>;
   assignWorkers: () => Observable<NomeStateResponse>;
   ackReport: () => Observable<NomeStateResponse>;
+  chooseCard: () => Observable<NomeStateResponse>;
+  makeOffering: () => Observable<NomeStateResponse>;
+  chooseCrop: () => Observable<NomeStateResponse>;
 }>;
 
 function setup(calls: Calls = {}) {
@@ -19,6 +22,9 @@ function setup(calls: Calls = {}) {
     build: vi.fn(calls.build ?? (() => of(NOME_STATE))),
     assignWorkers: vi.fn(calls.assignWorkers ?? (() => of(NOME_STATE))),
     ackReport: vi.fn(calls.ackReport ?? (() => of(NOME_STATE))),
+    chooseCard: vi.fn(calls.chooseCard ?? (() => of(NOME_STATE))),
+    makeOffering: vi.fn(calls.makeOffering ?? (() => of(NOME_STATE))),
+    chooseCrop: vi.fn(calls.chooseCrop ?? (() => of(NOME_STATE))),
   };
   TestBed.configureTestingModule({
     providers: [NomeStore, { provide: ApiService, useValue: api }],
@@ -119,6 +125,42 @@ describe('NomeStore', () => {
 
     expect(api.ackReport).toHaveBeenCalledWith('w1');
     expect(store.report()?.taxes).toBe(0);
+  });
+
+  it('sends the choice of a card and takes the new state', async () => {
+    const answered = withNome({ cards: [] });
+    const { store, api } = setup({ chooseCard: () => of(answered) });
+    await store.load('w1');
+
+    expect(await store.chooseCard(7, 'b')).toBe(true);
+
+    expect(api.chooseCard).toHaveBeenCalledWith('w1', 7, { choice: 'b' });
+    expect(store.pendingCards()).toEqual([]);
+  });
+
+  it('sends an offering and a crop through the same queue', async () => {
+    const { store, api } = setup();
+    await store.load('w1');
+
+    await store.makeOffering('hapy');
+    await store.chooseCrop(8, 'farm_barley');
+
+    expect(api.makeOffering).toHaveBeenCalledWith('w1', { god: 'hapy' });
+    expect(api.chooseCrop).toHaveBeenCalledWith('w1', 8, {
+      crop: 'farm_barley',
+    });
+  });
+
+  it('knows when the reign is over', async () => {
+    const over = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { store } = setup({ getNomeState: () => of(over) });
+    expect(store.reignOver()).toBe(false);
+
+    await store.load('w1');
+
+    expect(store.reignOver()).toBe(true);
   });
 
   it('does nothing before a world is loaded', async () => {
