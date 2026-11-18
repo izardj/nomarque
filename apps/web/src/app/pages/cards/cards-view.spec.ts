@@ -90,13 +90,22 @@ describe('isMalus', () => {
 });
 
 describe('isPenalty', () => {
-  it('needs at least one effect, all of them hurting', () => {
-    const loss: CardEffect = { kind: 'deben', amount: -30 };
-    const gain: CardEffect = { kind: 'deben', amount: 30 };
+  const loss: CardEffect = { kind: 'deben', amount: -30 };
+  const gain: CardEffect = { kind: 'deben', amount: 30 };
 
-    expect(isPenalty([])).toBe(false);
-    expect(isPenalty([loss])).toBe(true);
-    expect(isPenalty([loss, gain])).toBe(false);
+  it('needs at least one effect, all of them hurting', () => {
+    expect(isPenalty([], 0)).toBe(false);
+    expect(isPenalty([loss], 1)).toBe(true);
+    expect(isPenalty([loss, gain], 2)).toBe(false);
+  });
+
+  it('is not sure when a part of the text has no structured effect', () => {
+    expect(isPenalty([loss], 2)).toBe(false);
+  });
+
+  it('is not sure when the loss is only a chance', () => {
+    const risk: CardEffect = { kind: 'chance', probability: 0.5, effect: loss };
+    expect(isPenalty([risk], 1)).toBe(false);
   });
 });
 
@@ -157,7 +166,7 @@ describe('buildCardView', () => {
     expect(view?.choices.map((c) => c.affordable)).toEqual([true, false]);
   });
 
-  it('marks as penalty the choice that only costs', () => {
+  it('marks as penalty the choice that is a sure loss', () => {
     const view = buildCardView(NOME_WITH_CARD, TEST_NOW_MS);
     expect(view?.choices.map((c) => c.penalty)).toEqual([true, false]);
   });

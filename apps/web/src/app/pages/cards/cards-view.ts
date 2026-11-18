@@ -80,9 +80,19 @@ export function isMalus(effect: CardEffect): boolean {
   }
 }
 
-/** A choice that only costs: every effect is a malus. */
-export function isPenalty(effects: readonly CardEffect[]): boolean {
-  return effects.length > 0 && effects.every(isMalus);
+/**
+ * A choice that is a sure, fully known loss: every part of its text is a
+ * structured effect, none is uncertain, and all of them hurt.
+ */
+export function isPenalty(
+  effects: readonly CardEffect[],
+  textParts: number,
+): boolean {
+  return (
+    effects.length > 0 &&
+    effects.length === textParts &&
+    effects.every((effect) => effect.kind !== 'chance' && isMalus(effect))
+  );
 }
 
 /** The flat illustration of a card, tinted by its phase and its god. */
@@ -129,7 +139,7 @@ export function buildCardView(nome: NomeDto, nowMs: number): CardView | null {
         effect,
         affordable: choice.affordable,
         reason,
-        penalty: isPenalty(effects),
+        penalty: isPenalty(effects, choiceTexts.effect.split(' ; ').length),
       },
     ];
   });
