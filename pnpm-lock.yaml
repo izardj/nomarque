@@ -492,9 +492,30 @@ importers:
       '@nestjs/core':
         specifier: ^11.0.0
         version: 11.2.10(@nestjs/common@11.2.10(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@11.2.10)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/platform-express':
-        specifier: ^11.0.0
-        version: 11.2.10(@nestjs/common@11.2.10(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@11.2.10)(supports-color@7.2.0)
+      '@nomarque/data':
+        specifier: workspace:*
+        version: link:../../libs/data
+      '@nomarque/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@nomarque/nome-store':
+        specifier: workspace:*
+        version: link:../../libs/nome-store
+      '@nomarque/rules':
+        specifier: workspace:*
+        version: link:../../libs/rules
+      '@prisma/adapter-pg':
+        specifier: 7.10.1
+        version: 7.10.1
+      '@prisma/client':
+        specifier: 7.10.1
+        version: 7.10.1(prisma@7.10.1(@types/node@24.19.2)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3))(typescript@6.0.3)
+      bullmq:
+        specifier: ^6.7.7
+        version: 6.7.7(ioredis@6.0.0(supports-color@7.2.0))(pg@8.23.1)
+      ioredis:
+        specifier: ^6.0.0
+        version: 6.0.0(supports-color@7.2.0)
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -504,6 +525,9 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@nestjs/testing':
         specifier: ^11.0.0
