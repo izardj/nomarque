@@ -152,3 +152,18 @@ Validation : le test de propriété d'`advance` est vert.
 - **Rouleaux** : 20 rouleaux au départ (`stocks_depart.csv`) amorcent la boucle scribes ↔ maisons de niveau 3 avant les greniers royaux de J3.
 - **E-mail** : le mailer de dev (lien dans les journaux de l'API) reste le seul transport.
 - **Régions** : toujours sans effet ; Opus proposera des valeurs chiffrées au début de J3.
+- **Cartes d'événement** (Opus, `libs/rules/src/lib/cards.ts`) :
+  - tirées dans `advance` à instants fixes (toutes les 8 h de jeu), avec un générateur initialisé par l'id du nome et le numéro du tirage : le tirage ne dépend pas des connexions, le test de propriété le couvre ;
+  - une carte au plus une fois par année du Nil, 3 en attente au maximum ; poids 3 pour une carte à déclencheur d'état, 1 pour « Aléatoire », 0,2 pour « Rare » ;
+  - choix par défaut appliqué à l'expiration (24 h), coûts plafonnés à ce que le nome possède ; un choix du joueur dont les coûts certains dépassent les stocks est refusé (`cannot_afford`) ;
+  - « Tutoriel » (C01) et « Prix du pain » (C28) ne sont jamais tirés en J2 : ils attendent le tutoriel (J4) et le marché (J3) ;
+  - « Paysans occupés à 100 % depuis 48 h » : tous les paysans disponibles affectés, mesuré sur la grille de 6 h ;
+  - « une maison : montée bloquée » s'applique à tous les îlots ; « grenier inaccessible » ne réduit pas la capacité (le stockage est passif) ;
+  - « production −N % pendant H h » se lit comme une baisse des ouvriers de toutes les classes : un atelier à l'arrêt ne consomme pas ses entrées ;
+  - C17 « dieu du temple −10 » (aucun dieu du temple parmi les cinq) devient « tous les dieux −2 » dans `cartes.csv`.
+- **Dieux** (Opus, `gods.ts`) : jauge de 0 à 100, départ 50, baisse continue de 0,1/h (compensée par un temple actif, +0,1/h à chaque dieu), une offrande par 24 h (+10, coût dans `dieux.csv`). Bénédictions à 70 : Hâpy adoucit la crue basse (0,8 au lieu de 0,6), Osiris +10 % de récolte (−10 % s'il est négligé, sous 30), Bastet fait monter les maisons en 18 h au lieu de 24. Hâpy négligé : la crue haute perd son bonus. Thot et Sekhmet n'agissent que par leurs cartes en J2 (contrats en J3).
+- **Faveur royale** : +0,2 par unité de tribut payée, −0,5 par unité manquante ; seuil « élevée » à 50.
+- **Cultures** : un champ peut changer de céréale pendant Akhet, gratuitement ; verrouillé à l'heure 48.
+- **Fin de règne** : trois classements figés (richesse = deben + stocks au prix de référence, piété = somme des faveurs, faveur royale), ex æquo au même rang, prestige 10/6/3 puis 1 de participation. Table `ReignRanking`.
+- Toutes ces valeurs sont « Provisoire J2 » dans `parametres.csv` et `dieux.csv`.
+- Import des cartes et des dieux (DeepSeek) accepté sans retouche : grammaire des effets et des déclencheurs, 115 tests.
