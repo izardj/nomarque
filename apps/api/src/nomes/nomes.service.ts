@@ -2,7 +2,10 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import type {
   AssignWorkersRequest,
   BuildRequest,
+  CardChoiceRequest,
+  CropRequest,
   NomeStateResponse,
+  OfferingRequest,
 } from '@nomarque/contracts';
 import { GAME_DATA } from '@nomarque/data';
 import type { Prisma } from '@nomarque/db';
@@ -12,6 +15,8 @@ import {
   gameHours,
   mergeReports,
   reignLengthHours,
+  type CardDealt,
+  type RulesContext,
 } from '@nomarque/rules';
 import { apiError } from '../common/api-error';
 import { CLOCK, type Clock } from '../common/clock';
@@ -20,11 +25,14 @@ import {
   acknowledgeReportAction,
   assignWorkersAction,
   buildAction,
+  chooseCardAction,
+  chooseCropAction,
+  offeringAction,
   refusal,
   type NomeAction,
 } from './nome-actions';
 import { toNomeStateResponse } from './nomes.mapper';
-import { NomesRepository } from './nomes.repository';
+import { NomesRepository, type SettledCard } from './nomes.repository';
 
 function nomeNotFound(): Error {
   return apiError(
@@ -68,6 +76,40 @@ export class NomesService {
     );
   }
 
+  chooseCrop(
+    playerId: string,
+    worldId: string,
+    slot: number,
+    request: CropRequest,
+  ): Promise<NomeStateResponse> {
+    return this.runAction(
+      playerId,
+      worldId,
+      chooseCropAction(slot, request.crop),
+    );
+  }
+
+  makeOffering(
+    playerId: string,
+    worldId: string,
+    request: OfferingRequest,
+  ): Promise<NomeStateResponse> {
+    return this.runAction(playerId, worldId, offeringAction(request.god));
+  }
+
+  chooseCard(
+    playerId: string,
+    worldId: string,
+    drawId: number,
+    request: CardChoiceRequest,
+  ): Promise<NomeStateResponse> {
+    return this.runAction(
+      playerId,
+      worldId,
+      chooseCardAction(drawId, request.choice),
+    );
+  }
+
   acknowledgeReport(
     playerId: string,
     worldId: string,
@@ -104,28 +146,45 @@ export class NomesService {
     // Read after the lock: a queued request must see the previous one's write.
     const stored = await this.nomes.load(tx, nome.id);
 
+    const reignLength = reignLengthHours(GAME_DATA.parameters);
     const now = Math.min(
       Math.max(0, gameHours(nome.clock, this.clock.now())),
-      reignLengthHours(GAME_DATA.parameters),
+      reignLength,
     );
     // Never go back in time, whatever the clock says.
     const at = Math.max(stored.computedAt, now);
+    const context: RulesContext = {
+      data: GAME_DATA,
+      floods: nome.floods,
+      seed: nome.id,
+    };
     let state = stored.state;
     let pending = stored.pendingReport;
+    const settled: SettledCard[] = [];
+    const dealt: CardDealt[] = [];
     if (stored.computedAt < at) {
-      const advanced = advance(state, stored.computedAt, at, {
-        data: GAME_DATA,
-        floods: nome.floods,
-      });
+      const advanced = advance(state, stored.computedAt, at, context);
       state = advanced.state;
       pending = pending
         ? mergeReports(pending, advanced.report)
         : advanced.report;
+      dealt.push(...advanced.report.cardsDealt);
+      for (const card of advanced.report.cardsDefaulted) {
+        settled.push({
+          cardId: card.cardId,
+          drawnAt: card.drawId * GAME_DATA.parameters.cardDrawIntervalHours,
+          choice: card.choice,
+          resolvedAt: card.at,
+        });
+      }
     }
 
     let next = state;
     if (action) {
-      const result = action.apply(state, at);
+      if (at >= reignLength && !action.allowedWhenOver) {
+        throw refusal('reign_over');
+      }
+      const result = action.apply(state, at, context);
       if (!result.ok) {
         throw refusal(result.error);
       }
@@ -133,17 +192,35 @@ export class NomesService {
       if (action.clearsReport) {
         pending = null;
       }
+      const card = action.settlesCard;
+      const drawn = state.rules.cards.pending.find(
+        (c) => c.drawId === card?.drawId,
+      );
+      if (card && drawn) {
+        settled.push({
+          cardId: drawn.cardId,
+          drawnAt: drawn.drawnAt,
+          choice: card.choice,
+          resolvedAt: at,
+        });
+      }
     }
 
     if (stored.computedAt < at || action) {
       await this.nomes.save(tx, nome.id, stored.state, next, at, pending);
+      await this.nomes.recordCardsDealt(
+        tx,
+        nome.id,
+        dealt,
+        GAME_DATA.parameters.cardGraceHours,
+      );
+      await this.nomes.recordCardsSettled(tx, nome.id, settled);
     }
     if (action?.log) {
       await tx.actionLog.create({ data: { nomeId: nome.id, ...action.log } });
     }
     return toNomeStateResponse({
       nome,
-      favor: stored.favor,
       at,
       state: next,
       report: pending ?? emptyReport(at, at),
