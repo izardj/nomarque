@@ -13,6 +13,7 @@ import {
   realInstantMs,
   reignLengthHours,
   reignScores,
+  type ReignScores,
   type RulesContext,
 } from '@nomarque/rules';
 import { CLOCK, type Clock } from '../common/clock';
@@ -125,7 +126,7 @@ export class ReignProcessors {
       where: { reignId: reign.id },
       select: { id: true, dynastyId: true },
     });
-    const scores = new Map<string, ReturnType<typeof reignScores>>();
+    const scored: { nome: (typeof nomes)[number]; scores: ReignScores }[] = [];
     for (const nome of nomes) {
       // A no-op for a nome already advanced; catches one that joined since.
       const stored = await advanceNomeTo(
@@ -135,15 +136,15 @@ export class ReignProcessors {
         length,
         contextOf(nome.id),
       );
-      scores.set(nome.id, reignScores(stored.state, GAME_DATA));
+      scored.push({ nome, scores: reignScores(stored.state, GAME_DATA) });
     }
 
     const prestige = new Map<string, number>();
     for (const category of RANKING_CATEGORIES) {
       const ranked = rankScores(
-        nomes.map((nome) => ({
+        scored.map(({ nome, scores }) => ({
           key: nome,
-          score: scores.get(nome.id)![category],
+          score: scores[category],
         })),
         GAME_DATA,
       );
