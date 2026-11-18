@@ -59,10 +59,19 @@
     class="btn btn--primary ack"
     type="button"
     [attr.aria-busy]="busy()"
-    [disabled]="busy()"
+    [disabled]="busy() || reignOver()"
     (click)="acknowledge()"
   >
     {{ t.ack }}
   </button>
+</section>
+} @if (report.pendingCards > 0) {
+<section class="card card--cards">
+  <p class="cards__text">{{ t.cardsLink(report.pendingCards) }}</p>
+  <a
+    class="btn btn--primary"
+    [routerLink]="['/worlds', worldId(), 'nome', 'cartes']"
+    >{{ t.cardsLinkAction }}</a
+  >
 </section>
 } }

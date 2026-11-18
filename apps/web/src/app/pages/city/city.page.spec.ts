@@ -1,7 +1,7 @@
 import { throwError } from 'rxjs';
 import { GAME_DATA } from '@nomarque/data';
 import { setupScreen } from '../../core/screen-testing';
-import { NOME_STATE, nomeState } from '../../core/testing';
+import { NOME_STATE, nomeState, withNome } from '../../core/testing';
 import { fr } from '../../i18n/fr';
 import { CityPage } from './city.page';
 
@@ -199,5 +199,110 @@ describe('CityPage', () => {
 
     expect(el.querySelector('.panel')).not.toBeNull();
     expect(store.error()).toBe(fr.errors.not_enough_deben);
+  });
+
+  it('disables the construction choices once the reign is over', async () => {
+    const state = withNome({
+      reign: { ...NOME_STATE.nome.reign, over: true },
+    });
+    const { el, fixture } = await setupScreen(CityPage, state);
+
+    tiles(el)[2].click();
+    fixture.detectChanges();
+
+    const choices = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('.choice'),
+    );
+    expect(choices.length).toBeGreaterThan(0);
+    expect(choices.every((choice) => choice.disabled)).toBe(true);
+  });
+
+  describe('crops', () => {
+    const akhet = withNome({
+      nile: {
+        ...NOME_STATE.nome.nile,
+        phase: 'akhet',
+        cropsLocked: false,
+        nextPhase: 'peret',
+      },
+    });
+
+    function crops(el: HTMLElement): HTMLButtonElement[] {
+      return Array.from(
+        el.querySelectorAll<HTMLButtonElement>('.crops .choice'),
+      );
+    }
+
+    it('offers the crops of the zone on a finished field during Akhet', async () => {
+      const { el, fixture } = await setupScreen(CityPage, akhet);
+
+      tiles(el)[8].click();
+      fixture.detectChanges();
+
+      expect(
+        crops(el).map((crop) => text(crop.querySelector('.choice__name')!)),
+      ).toEqual(['Champ de blé', "Champ d'orge", 'Champ de lin']);
+      expect(
+        crops(el).map((crop) => crop.getAttribute('aria-pressed')),
+      ).toEqual(['true', 'false', 'false']);
+    });
+
+    it('sends the slot and the crop of the chosen field', async () => {
+      const { el, fixture, api, settle } = await setupScreen(CityPage, akhet);
+
+      tiles(el)[8].click();
+      fixture.detectChanges();
+      crops(el)[1].click();
+      await settle();
+
+      expect(api.chooseCrop).toHaveBeenCalledWith('w1', 8, {
+        crop: 'farm_barley',
+      });
+    });
+
+    it('does not send the crop the field already grows', async () => {
+      const { el, fixture, api, settle } = await setupScreen(CityPage, akhet);
+
+      tiles(el)[8].click();
+      fixture.detectChanges();
+      crops(el)[0].click();
+      await settle();
+
+      expect(api.chooseCrop).not.toHaveBeenCalled();
+    });
+
+    it('hides the crops and explains why once they are locked', async () => {
+      const { el, fixture } = await setupScreen(CityPage);
+
+      tiles(el)[8].click();
+      fixture.detectChanges();
+
+      expect(crops(el)).toEqual([]);
+      expect(text(el.querySelector('.crops')!)).toContain(
+        'Les semailles sont faites',
+      );
+    });
+
+    it('shows no crop section on another building', async () => {
+      const { el, fixture } = await setupScreen(CityPage, akhet);
+
+      tiles(el)[0].click();
+      fixture.detectChanges();
+
+      expect(el.querySelector('.crops')).toBeNull();
+    });
+
+    it('disables the crops once the reign is over', async () => {
+      const over = withNome({
+        ...akhet.nome,
+        reign: { ...NOME_STATE.nome.reign, over: true },
+      });
+      const { el, fixture } = await setupScreen(CityPage, over);
+
+      tiles(el)[8].click();
+      fixture.detectChanges();
+
+      expect(crops(el).every((crop) => crop.disabled)).toBe(true);
+    });
   });
 });

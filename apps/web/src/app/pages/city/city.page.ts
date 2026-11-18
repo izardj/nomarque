@@ -19,8 +19,10 @@ import { FR_LABELS, ZONES } from '@nomarque/data';
 import { fr } from '../../i18n/fr';
 import {
   type BuildChoice,
+  type CropOption,
   buildChoices,
   buildTiles,
+  cropOptions,
   buildingSummary,
   isSite,
   siteRemaining,
@@ -36,6 +38,8 @@ interface Detail {
   /** Workers line of a finished building. */
   workers: string | null;
   choices: BuildChoice[];
+  /** Crops a finished field may switch to; empty for any other parcel. */
+  crops: CropOption[];
 }
 
 @Component({
@@ -56,6 +60,7 @@ export class CityPage {
   }));
   protected readonly worldId = this.store.worldId;
   protected readonly busy = this.store.busy;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly selectedSlot = signal<number | null>(null);
   protected readonly chosenKey = signal<string | null>(null);
 
@@ -106,6 +111,7 @@ export class CityPage {
         lines: [siteLine],
         workers: null,
         choices: [],
+        crops: [],
       };
     }
     if (parcel.building !== null) {
@@ -132,6 +138,7 @@ export class CityPage {
           plural(workerClass.one, def.workers),
         ),
         choices: [],
+        crops: cropOptions(parcel),
       };
     }
     if (parcel.houses !== null) {
@@ -143,6 +150,7 @@ export class CityPage {
         lines: [this.t.houseLevel(level, FR_LABELS.houses[houseDef(level).id])],
         workers: null,
         choices: [],
+        crops: [],
       };
     }
     return {
@@ -152,8 +160,12 @@ export class CityPage {
       lines: [this.t.zone(fr.zones[parcel.zone])],
       workers: null,
       choices: buildChoices(parcel.zone, nome.deben),
+      crops: [],
     };
   });
+  protected readonly cropsLocked = computed(
+    () => this.nome()?.nile.cropsLocked ?? true,
+  );
   protected readonly chosen = computed(
     () =>
       this.detail()?.choices.find(
@@ -175,6 +187,13 @@ export class CityPage {
     this.chosenKey.update((current) =>
       current === choice.key ? null : choice.key,
     );
+  }
+
+  protected async changeCrop(crop: CropOption): Promise<void> {
+    const slot = this.selectedSlot();
+    if (slot !== null && !crop.current) {
+      await this.store.chooseCrop(slot, crop.building);
+    }
   }
 
   protected async confirm(): Promise<void> {

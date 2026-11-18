@@ -1,7 +1,9 @@
 import type {
   MeResponse,
+  NomeDto,
   NomeStateResponse,
   ParcelDto,
+  PendingCardDto,
   StewardReportDto,
 } from '@nomarque/contracts';
 
@@ -55,6 +57,9 @@ export const EMPTY_REPORT: StewardReportDto = {
   completed: [],
   houseChanges: [],
   houseWarnings: [],
+  royalFavor: 0,
+  cardsDealt: [],
+  cardsDefaulted: [],
 };
 
 export const BUSY_REPORT: StewardReportDto = {
@@ -72,6 +77,23 @@ export const BUSY_REPORT: StewardReportDto = {
   completed: [5],
   houseChanges: [{ slot: 4, at: 105, from: 2, to: 1 }],
   houseWarnings: [{ slot: 4, at: 108 }],
+  royalFavor: -3,
+  cardsDealt: [{ drawId: 7, cardId: 'C01', at: 104 }],
+  cardsDefaulted: [{ drawId: 6, cardId: 'C02', at: 102, choice: 'a' }],
+};
+
+/** A card waiting for an answer, expiring 22 hours after the test instant. */
+export const PENDING_CARD: PendingCardDto = {
+  drawId: 7,
+  cardId: 'C01',
+  drawnAt: 104,
+  expiresAt: 131,
+  expiresAtIso: '2026-11-18T08:00:00.000Z',
+  defaultChoice: 'a',
+  choices: [
+    { key: 'a', affordable: true },
+    { key: 'b', affordable: false },
+  ],
 };
 
 /** A nome in the middle of Peret, with one parcel of each kind. */
@@ -89,6 +111,8 @@ export const NOME_STATE: NomeStateResponse = {
       phase: 'peret',
       hourOfYear: 109.2,
       flood: 'good',
+      nextFlood: null,
+      cropsLocked: true,
       nextPhase: 'shemu',
       nextPhaseAt: 200,
       nextPhaseAtIso: '2026-11-18T10:00:00.000Z',
@@ -148,6 +172,18 @@ export const NOME_STATE: NomeStateResponse = {
       parcel(14, 'river'),
       parcel(15, 'river'),
     ],
+    gods: {
+      hapy: { favor: 82, standing: 'blessing' },
+      osiris: { favor: 50, standing: 'neutral' },
+      thoth: { favor: 25, standing: 'low' },
+      bastet: { favor: 10, standing: 'veryLow' },
+      sekhmet: { favor: 50, standing: 'neutral' },
+    },
+    nextOfferingAt: null,
+    nextOfferingAtIso: null,
+    cards: [],
+    modifiers: [],
+    reign: { endsAt: 4000, endsAtIso: '2026-12-31T10:00:00.000Z', over: false },
     dataVersion: 'test',
   },
   report: BUSY_REPORT,
@@ -157,4 +193,9 @@ export function nomeState(
   overrides: Partial<NomeStateResponse> = {},
 ): NomeStateResponse {
   return { ...NOME_STATE, ...overrides };
+}
+
+/** The nome of the test state with some fields replaced. */
+export function withNome(overrides: Partial<NomeDto>): NomeStateResponse {
+  return { ...NOME_STATE, nome: { ...NOME_STATE.nome, ...overrides } };
 }

@@ -4,11 +4,14 @@ import {
   type ApiErrorDto,
   type AssignWorkersRequest,
   type BuildRequest,
+  type CardChoiceRequest,
+  type CropRequest,
   type JoinWorldRequest,
   type JoinWorldResponse,
   type MeResponse,
   type MyNomeResponse,
   type NomeStateResponse,
+  type OfferingRequest,
   type RequestMagicLinkRequest,
   type RequestMagicLinkResponse,
   type VerifyMagicLinkRequest,
@@ -144,6 +147,44 @@ export class ApiService {
     return this.guard(
       this.http.post<NomeStateResponse>(
         `${this.nomeUrl(worldId)}/parcels/${slot}/workers`,
+        request,
+      ),
+    );
+  }
+
+  chooseCard(
+    worldId: string,
+    drawId: number,
+    request: CardChoiceRequest,
+  ): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/cards/${drawId}/choice`,
+        request,
+      ),
+    );
+  }
+
+  makeOffering(
+    worldId: string,
+    request: OfferingRequest,
+  ): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/offerings`,
+        request,
+      ),
+    );
+  }
+
+  chooseCrop(
+    worldId: string,
+    slot: number,
+    request: CropRequest,
+  ): Observable<NomeStateResponse> {
+    return this.guard(
+      this.http.post<NomeStateResponse>(
+        `${this.nomeUrl(worldId)}/parcels/${slot}/crop`,
         request,
       ),
     );

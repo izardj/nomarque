@@ -20,6 +20,8 @@ import { fr } from '../../i18n/fr';
 
 interface Tab {
   key: keyof typeof fr.shell.tabs;
+  /** Shows the number of cards waiting for a decision. */
+  badge?: 'cards';
   /** Route relative to the shell; null while the screen does not exist. */
   link: string | null;
   /** `d` attributes of the 24 × 24 line icon. */
@@ -37,6 +39,20 @@ const TABS: readonly Tab[] = [
     ],
   },
   {
+    key: 'cards',
+    link: 'cartes',
+    badge: 'cards',
+    icon: [
+      'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
+      'M12 8l3 4-3 4-3-4z',
+    ],
+  },
+  {
+    key: 'workers',
+    link: 'ouvriers',
+    icon: ['M15 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'M6 21v-5a6 6 0 0 1 12 0v5'],
+  },
+  {
     key: 'city',
     link: 'cite',
     icon: [
@@ -47,9 +63,9 @@ const TABS: readonly Tab[] = [
     ],
   },
   {
-    key: 'workers',
-    link: 'ouvriers',
-    icon: ['M15 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'M6 21v-5a6 6 0 0 1 12 0v5'],
+    key: 'gods',
+    link: 'dieux',
+    icon: ['M12 13c-3 0-4-2-4-4a4 4 0 0 1 8 0c0 2-1 4-4 4z', 'M12 13v8M8 17h8'],
   },
   {
     key: 'market',
@@ -90,6 +106,7 @@ export class NomeShellPage {
   protected readonly tabs = TABS;
   protected readonly nome = this.store.nome;
   protected readonly error = this.store.error;
+  protected readonly reignOver = this.store.reignOver;
   protected readonly phases = computed(() => {
     const current = this.nome()?.nile.phase;
     return NILE_PHASES.map((phase) => ({
@@ -126,6 +143,19 @@ export class NomeShellPage {
 
   protected tabLabel(tab: Tab): string {
     return fr.shell.tabs[tab.key];
+  }
+
+  /** Cards waiting on a tab; zero when the tab has no badge. */
+  protected badgeCount(tab: Tab): number {
+    return tab.badge === 'cards' ? this.store.pendingCards().length : 0;
+  }
+
+  /** Spoken name of a tab: its label, then what is waiting on it. */
+  protected tabAriaLabel(tab: Tab): string | null {
+    const count = this.badgeCount(tab);
+    return count > 0
+      ? `${this.tabLabel(tab)}, ${fr.shell.pendingCards(count)}`
+      : null;
   }
 
   private async loadNome(worldId: string): Promise<void> {

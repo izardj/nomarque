@@ -1,0 +1,81 @@
+<div class="top">
+  <a class="back" [routerLink]="['/worlds', worldId(), 'nome', 'rapport']"
+    >{{ t.back }}</a
+  >
+  @if (view(); as card) {
+  <div class="position">{{ card.position }}</div>
+  }
+</div>
+
+@if (view(); as card) {
+<article class="card" aria-labelledby="card-title">
+  <figure class="art">
+    <svg
+      width="358"
+      height="230"
+      viewBox="0 0 358 230"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <rect x="0" y="0" width="358" height="120" [attr.fill]="card.art.sky" />
+      <circle cx="292" cy="54" r="26" [attr.fill]="card.art.sun" />
+      <rect
+        x="0"
+        y="120"
+        width="358"
+        height="110"
+        [attr.fill]="card.art.ground"
+      />
+      <path
+        d="M0 140H358M0 162H358M0 184H358M0 206H358"
+        stroke="#1f1a14"
+        stroke-opacity="0.25"
+        stroke-width="2"
+      />
+    </svg>
+    @if (card.art.god) {
+    <figcaption class="art__god">{{ card.art.god }}</figcaption>
+    }
+  </figure>
+
+  <div class="story">
+    <h1 #title id="card-title" tabindex="-1" class="title">{{ card.title }}</h1>
+    <p class="text">{{ card.text }}</p>
+  </div>
+
+  <ul class="choices">
+    @for (choice of card.choices; track choice.key) {
+    <li>
+      <button
+        class="choice"
+        type="button"
+        [disabled]="!choice.affordable || busy() || reignOver()"
+        (click)="choose(card.drawId, choice)"
+      >
+        <span class="choice__label">{{ choice.label }}</span>
+        <span
+          class="choice__effect"
+          [class.choice__effect--penalty]="choice.penalty"
+          >{{ choice.effect }}</span
+        >
+        @if (choice.reason) {
+        <span class="choice__reason">{{ choice.reason }}</span>
+        }
+      </button>
+    </li>
+    }
+  </ul>
+
+  <p class="footnote">{{ card.footnote }}</p>
+</article>
+} @else if (loaded()) {
+<section class="surface empty">
+  <p class="empty__title">{{ t.emptyTitle }}</p>
+  <p class="secondary">{{ t.emptyText }}</p>
+  <a
+    class="btn btn--secondary"
+    [routerLink]="['/worlds', worldId(), 'nome', 'rapport']"
+    >{{ t.emptyLink }}</a
+  >
+</section>
+}
