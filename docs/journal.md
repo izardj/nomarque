@@ -167,3 +167,23 @@ Validation : le test de propriété d'`advance` est vert.
 - **Fin de règne** : trois classements figés (richesse = deben + stocks au prix de référence, piété = somme des faveurs, faveur royale), ex æquo au même rang, prestige 10/6/3 puis 1 de participation. Table `ReignRanking`.
 - Toutes ces valeurs sont « Provisoire J2 » dans `parametres.csv` et `dieux.csv`.
 - Import des cartes et des dieux (DeepSeek) accepté sans retouche : grammaire des effets et des déclencheurs, 115 tests.
+- API du nome J2 (Sonnet) acceptée ; Opus a corrigé le contrat (`ReignDto` déclaré deux fois, renommé `NomeReignDto`) et ajouté `drawnAt` aux cartes appliquées par défaut. 56 tests.
+- Écrans Cartes, Dieux (avec le panneau du Nil), choix des cultures, ajouts au rapport, bandeau de fin de règne (Sonnet) acceptés ; Opus a corrigé une donnée de test et le contraste des boutons désactivés (opacité remplacée par des couleurs, 7:1). 195 tests.
+- Worker (Sonnet) accepté : file BullMQ `reign` (`reign.start`, `nile.phase`, `reign.end`), réconciliation au démarrage, traitements idempotents. La sauvegarde d'un nome est extraite dans `libs/nome-store`, partagée par l'API et le worker. 14 tests.
+- Tirage des crues (Opus) : `drawFloods(reignId)` dans `libs/rules`, 25 % basse, 20 % haute (provisoire). Le worker avait gardé quatre crues bonnes en attendant.
+- Aucune escalade.
+
+#### Décisions (suite)
+
+- Ids des jobs BullMQ séparés par `_` (BullMQ refuse `:`).
+- Funérailles : `FUNERALS_HOURS = 24` dans le worker, dérivé de la fin de la dernière année.
+- Fin de règne : le joueur n'a plus de nome dans le règne suivant tant qu'il ne l'a pas rejoint. L'écran de résultats du règne terminé (classements, prestige) arrive avec les classements (J4) ; d'ici là le joueur retombe sur « rejoindre un monde ».
+- Rattrapage : après un long arrêt, le worker enchaîne les règnes en retard d'un monde (vu sur le monde de test des tests `db`, 80 règnes de 4 jours depuis janvier). Comportement voulu, à surveiller en bêta.
+- Les tests de l'API, du worker et de `db` partagent la base de dev.
+
+#### Validation de J2
+
+- Simulation d'un règne complet (`nx run reign-sim:simulate`) : 4 joueurs robots via l'API HTTP, API et worker réels, monde accéléré (règne de 10 minutes, vitesse 4032). 1 269 requêtes, 0 erreur HTTP, 0 erreur dans les journaux de l'API et du worker. 185 cartes tranchées, 101 offrandes, 33 constructions, 29 changements de culture. Le worker a clos le règne : nomes avancés à l'heure 672, 12 lignes de classement, prestige versé, crues révélées, règne suivant créé.
+- La spec demande un règne en 4 jours à la vitesse 7 : la simulation accélérée prouve le même parcours ; le règne réel de 4 jours reste à lancer sur un serveur.
+- Suite complète : test, lint et build verts sur les 10 projets.
+- Captures à 390 px dans `docs/img/j2/` (rapport, carte, dieux, champ).
