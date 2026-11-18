@@ -191,6 +191,13 @@ export const fr = {
     houseWarning: (name: string): string =>
       `Attention : ${name} manque d'un service et risque de redescendre.`,
     unknownParcel: 'une parcelle',
+    royalFavor: 'faveur royale',
+    cardDealt: (title: string): string => `Nouvelle carte : ${title}.`,
+    cardDefaulted: (title: string, choice: string): string =>
+      `Sans réponse de ta part, Méri a tranché pour « ${title} » : ${choice}.`,
+    cardsLink: (count: number): string =>
+      `${numberFormat.format(count)} ${count < 2 ? 'décision attend' : 'décisions attendent'} ta réponse`,
+    cardsLinkAction: 'Voir les cartes',
   },
 
   cards: {
