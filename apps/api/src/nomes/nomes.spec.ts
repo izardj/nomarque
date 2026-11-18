@@ -1,5 +1,11 @@
-import type { NomeStateResponse } from '@nomarque/contracts';
-import { GAME_DATA, type BuildingDef, type MapSlotDef } from '@nomarque/data';
+import type { NomeStateResponse, PendingCardDto } from '@nomarque/contracts';
+import {
+  GAME_DATA,
+  type BuildingDef,
+  type CardChoiceKey,
+  type MapSlotDef,
+  type ResourceId,
+} from '@nomarque/data';
 import type { World } from '@nomarque/db';
 import request from 'supertest';
 import type { App } from 'supertest/types';
@@ -16,7 +22,14 @@ const SPEED = 7;
 /** Real hours the reign has been running when a nome joins. */
 const JOINED_AFTER = 2;
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
-const { startingDeben, houseBlockCost, houseZones } = GAME_DATA.parameters;
+const {
+  startingDeben,
+  houseBlockCost,
+  houseZones,
+  cardDrawIntervalHours,
+  offeringIntervalHours,
+} = GAME_DATA.parameters;
+const REIGN_REAL_HOURS = 96;
 
 const emptySlots = GAME_DATA.map.filter((slot) => slot.start === null);
 const houseSlots = emptySlots.filter((slot) => houseZones.includes(slot.zone));
@@ -49,6 +62,57 @@ function forbiddenBuilding(): { building: BuildingDef; slot: MapSlotDef } {
 function requiredWorkers(slot: MapSlotDef): number {
   const id = slot.start?.kind === 'building' ? slot.start.building : null;
   return GAME_DATA.buildings.find((b) => b.id === id)?.workers ?? 0;
+}
+
+/** A field of the starting map and another crop its zone allows. */
+function swappableField(): { slot: MapSlotDef; crop: BuildingDef } {
+  const fields = GAME_DATA.buildings.filter((b) => b.kind === 'field');
+  for (const slot of startingBuildings) {
+    const current =
+      slot.start?.kind === 'building' ? slot.start.building : null;
+    if (!fields.some((f) => f.id === current)) {
+      continue;
+    }
+    const crop = fields.find(
+      (f) => f.id !== current && f.zones.includes(slot.zone),
+    );
+    if (crop) {
+      return { slot, crop };
+    }
+  }
+  throw new Error('No field can change crop in the starting map.');
+}
+
+/** A god whose offering the starting stocks pay for. */
+function affordableGod() {
+  const god = GAME_DATA.gods.find(
+    (g) =>
+      (GAME_DATA.startingStocks[g.offering.resource] ?? 0) >=
+      g.offering.quantity,
+  );
+  if (!god) {
+    throw new Error('No god accepts an offering from the starting stocks.');
+  }
+  return god;
+}
+
+/** What a choice of a pending card certainly adds to a stock or the deben. */
+function directChange(
+  card: PendingCardDto,
+  key: CardChoiceKey,
+): { resource: ResourceId | 'deben'; amount: number } | undefined {
+  const choice = GAME_DATA.cards
+    .find((c) => c.id === card.cardId)
+    ?.choices.find((c) => c.key === key);
+  for (const effect of choice?.effects ?? []) {
+    if (effect.kind === 'resource') {
+      return { resource: effect.resource, amount: effect.amount };
+    }
+    if (effect.kind === 'deben') {
+      return { resource: 'deben', amount: effect.amount };
+    }
+  }
+  return undefined;
 }
 
 describe.skipIf(!hasDatabase)('nomes', () => {
@@ -90,7 +154,7 @@ describe.skipIf(!hasDatabase)('nomes', () => {
         status: 'RUNNING',
         dataVersion: GAME_DATA.version,
         startsAt,
-        endsAt: new Date(startsAt.getTime() + 96 * HOUR_MS),
+        endsAt: new Date(startsAt.getTime() + REIGN_REAL_HOURS * HOUR_MS),
       },
     });
     const floods = ['LOW', 'GOOD', 'HIGH', 'GOOD'] as const;
@@ -145,6 +209,32 @@ describe.skipIf(!hasDatabase)('nomes', () => {
     t.clock.advance(realHours * HOUR_MS);
   }
 
+  /**
+   * Lets draw instants pass until a pending card satisfies `wanted`. Which
+   * card comes depends on the nome id, so tests read it instead of fixing it.
+   */
+  async function waitForCard(
+    p: Player,
+    wanted: (card: PendingCardDto, state: NomeStateResponse) => boolean = () =>
+      true,
+  ): Promise<{ card: PendingCardDto; state: NomeStateResponse }> {
+    for (let draws = 0; draws < 40; draws += 1) {
+      wait(cardDrawIntervalHours / SPEED);
+      const state = (await get(p)).body as NomeStateResponse;
+      const card = state.nome.cards.find((c) => wanted(c, state));
+      if (card) {
+        return { card, state };
+      }
+    }
+    throw new Error('No suitable card was dealt.');
+  }
+
+  const cardRows = (p: Player) =>
+    t.prisma.client.eventCardDraw.findMany({
+      where: { nomeId: p.nomeId },
+      orderBy: { drawnAt: 'asc' },
+    });
+
   const dbNome = (p: Player) =>
     t.prisma.client.nome.findUniqueOrThrow({ where: { id: p.nomeId } });
   const logTypes = async (p: Player): Promise<string[]> =>
@@ -162,6 +252,11 @@ describe.skipIf(!hasDatabase)('nomes', () => {
       request(server).post(`${base}/parcels/0/build`).send({ kind: 'houses' }),
       request(server).post(`${base}/parcels/0/workers`).send({ workers: 1 }),
       request(server).post(`${base}/report/ack`),
+      request(server)
+        .post(`${base}/parcels/0/crop`)
+        .send({ crop: swappableField().crop.id }),
+      request(server).post(`${base}/offerings`).send({ god: 'hapy' }),
+      request(server).post(`${base}/cards/0/choice`).send({ choice: 'a' }),
     ]);
     for (const response of responses) {
       expect(response.status).toBe(401);
@@ -202,11 +297,13 @@ describe.skipIf(!hasDatabase)('nomes', () => {
 
   it('advances the nome on read and reports what happened', async () => {
     const p = await newPlayer('reads');
-    wait(4);
+    // Short enough for no card to reach its default choice, which would
+    // change the deben: a card is dealt at 16 hours and settles 24 later.
+    wait(2);
     const response = await get(p);
     expect(response.status).toBe(200);
     const { nome, report } = response.body as NomeStateResponse;
-    expect(nome.gameHours).toBeCloseTo((JOINED_AFTER + 4) * SPEED, 6);
+    expect(nome.gameHours).toBeCloseTo((JOINED_AFTER + 2) * SPEED, 6);
     expect(report.from).toBeCloseTo(JOINED_AFTER * SPEED, 6);
     expect(report.to).toBeCloseTo(nome.gameHours, 6);
     expect(report.consumed.wheat).toBeGreaterThan(0);
@@ -423,6 +520,9 @@ describe.skipIf(!hasDatabase)('nomes', () => {
       [`parcels/${slot}/workers`, { workers: -1 }],
       [`parcels/${slot}/build`, { kind: 'palace' }],
       [`parcels/${slot}/build`, { kind: 'building', building: 'palace' }],
+      [`parcels/${slot}/crop`, { crop: 'palace' }],
+      ['offerings', { god: 'zeus' }],
+      ['cards/0/choice', { choice: 'd' }],
     ];
     for (const [path, body] of bodies) {
       const response = await post(p, path, body);
@@ -433,6 +533,9 @@ describe.skipIf(!hasDatabase)('nomes', () => {
       const response = await post(p, `parcels/${bad}/workers`, { workers: 1 });
       expect(response.status).toBe(400);
       expect(response.body.code).toBe('invalid_slot');
+      const card = await post(p, `cards/${bad}/choice`, { choice: 'a' });
+      expect(card.status).toBe(400);
+      expect(card.body.code).toBe('invalid_draw');
     }
   });
 
@@ -457,6 +560,277 @@ describe.skipIf(!hasDatabase)('nomes', () => {
     ]);
   });
 
+  describe('event cards', () => {
+    it('deals a card, then applies the choice of the player', async () => {
+      const p = await newPlayer('card');
+      const { card, state } = await waitForCard(p, (c, st) =>
+        c.choices.some((choice) => {
+          const change = directChange(c, choice.key);
+          return (
+            choice.affordable &&
+            change !== undefined &&
+            (change.amount < 0 ||
+              change.resource === 'deben' ||
+              (st.nome.stocks[change.resource] ?? 0) + change.amount <=
+                st.nome.capacity)
+          );
+        }),
+      );
+      expect(card.expiresAt).toBeCloseTo(
+        card.drawnAt + GAME_DATA.parameters.cardGraceHours,
+        6,
+      );
+      expect(state.report.cardsDealt.map((d) => d.drawId)).toContain(
+        card.drawId,
+      );
+      const rows = await cardRows(p);
+      const dealt = rows.find((r) => r.cardId === card.cardId);
+      expect(dealt).toMatchObject({
+        drawnAt: card.drawnAt,
+        expiresAt: card.expiresAt,
+        choice: null,
+        resolvedAt: null,
+      });
+
+      const choice = card.choices.find(
+        (c) => c.affordable && directChange(card, c.key) !== undefined,
+      )!;
+      const change = directChange(card, choice.key)!;
+      const read = (r: NomeStateResponse): number =>
+        change.resource === 'deben'
+          ? r.nome.deben
+          : (r.nome.stocks[change.resource] ?? 0);
+      const response = await post(p, `cards/${card.drawId}/choice`, {
+        choice: choice.key,
+      });
+      expect(response.status).toBe(201);
+      const after = response.body as NomeStateResponse;
+      expect(after.nome.cards.map((c) => c.drawId)).not.toContain(card.drawId);
+      expect(read(after)).not.toBeCloseTo(read(state), 6);
+
+      const settled = (await cardRows(p)).find((r) => r.cardId === card.cardId);
+      expect(settled).toMatchObject({
+        drawnAt: card.drawnAt,
+        choice: choice.key,
+        resolvedAt: after.nome.gameHours,
+      });
+      expect(
+        (await cardRows(p)).filter((r) => r.cardId === card.cardId),
+      ).toHaveLength(1);
+      const logs = await t.prisma.client.actionLog.findMany({
+        where: { nomeId: p.nomeId, type: 'nome.card' },
+      });
+      expect(logs.map((l) => l.payload)).toEqual([
+        { drawId: card.drawId, choice: choice.key },
+      ]);
+
+      const again = await post(p, `cards/${card.drawId}/choice`, {
+        choice: choice.key,
+      });
+      expect(again.status).toBe(422);
+      expect(again.body.code).toBe('unknown_card');
+    });
+
+    it('applies the default choice of a card left alone, and records it', async () => {
+      const p = await newPlayer('default');
+      const { card } = await waitForCard(p);
+      wait(GAME_DATA.parameters.cardGraceHours / SPEED + 0.1);
+      const { nome, report } = (await get(p)).body as NomeStateResponse;
+      expect(nome.cards.map((c) => c.drawId)).not.toContain(card.drawId);
+      const defaulted = report.cardsDefaulted.find(
+        (d) => d.drawId === card.drawId,
+      );
+      expect(defaulted).toMatchObject({
+        cardId: card.cardId,
+        choice: card.defaultChoice,
+      });
+      const row = (await cardRows(p)).find((r) => r.cardId === card.cardId);
+      expect(row).toMatchObject({
+        drawnAt: card.drawnAt,
+        choice: card.defaultChoice,
+        resolvedAt: card.expiresAt,
+      });
+    });
+
+    it('records a card dealt and defaulted in one advance', async () => {
+      const p = await newPlayer('oneshot');
+      wait((8 * cardDrawIntervalHours) / SPEED);
+      const { report } = (await get(p)).body as NomeStateResponse;
+      expect(report.cardsDealt.length).toBeGreaterThan(0);
+      const rows = await cardRows(p);
+      expect(rows).toHaveLength(report.cardsDealt.length);
+      for (const defaulted of report.cardsDefaulted) {
+        expect(rows.find((r) => r.cardId === defaulted.cardId)?.choice).toBe(
+          defaulted.choice,
+        );
+      }
+    });
+  });
+
+  describe('offerings', () => {
+    it('accepts an offering, then refuses a second one too soon', async () => {
+      const p = await newPlayer('offering');
+      const god = affordableGod();
+      const before = (await get(p)).body as NomeStateResponse;
+      expect(before.nome.nextOfferingAt).toBeNull();
+      expect(before.nome.nextOfferingAtIso).toBeNull();
+
+      const response = await post(p, 'offerings', { god: god.id });
+      expect(response.status).toBe(201);
+      const { nome } = response.body as NomeStateResponse;
+      expect(nome.stocks[god.offering.resource]).toBeCloseTo(
+        (before.nome.stocks[god.offering.resource] ?? 0) -
+          god.offering.quantity,
+        6,
+      );
+      expect(nome.gods[god.id].favor).toBeCloseTo(
+        Math.min(
+          GAME_DATA.parameters.godFavorMax,
+          before.nome.gods[god.id].favor + god.favorPerOffering,
+        ),
+        6,
+      );
+      expect(nome.nextOfferingAt).toBeCloseTo(
+        nome.gameHours + offeringIntervalHours,
+        6,
+      );
+      expect(nome.nextOfferingAtIso).not.toBeNull();
+
+      const second = await post(p, 'offerings', { god: god.id });
+      expect(second.status).toBe(422);
+      expect(second.body.code).toBe('offering_too_soon');
+      expect(await logTypes(p)).toEqual(['world.join', 'nome.offering']);
+
+      wait(offeringIntervalHours / SPEED + 0.1);
+      const later = (await get(p)).body as NomeStateResponse;
+      expect(later.nome.nextOfferingAt).toBeNull();
+    });
+  });
+
+  describe('crops', () => {
+    it('changes the crop of a field in Akhet, then locks it in Peret', async () => {
+      const p = await newPlayer('crop');
+      const { slot, crop } = swappableField();
+      const first = (await get(p)).body as NomeStateResponse;
+      expect(first.nome.nile.cropsLocked).toBe(false);
+
+      const response = await post(p, `parcels/${slot.slot}/crop`, {
+        crop: crop.id,
+      });
+      expect(response.status).toBe(201);
+      const { nome } = response.body as NomeStateResponse;
+      expect(nome.parcels[slot.slot]?.building).toBe(crop.id);
+      const row = await t.prisma.client.parcel.findUniqueOrThrow({
+        where: { nomeId_slot: { nomeId: p.nomeId, slot: slot.slot } },
+      });
+      expect(row.buildingType).toBe(crop.id);
+      expect(row.workers).toBeLessThanOrEqual(crop.workers);
+
+      const notAField = await post(p, `parcels/${emptySlots[0]!.slot}/crop`, {
+        crop: crop.id,
+      });
+      expect(notAField.status).toBe(422);
+      expect(notAField.body.code).toBe('not_a_field');
+
+      // Peret starts at hour 48 of the Nile year.
+      wait((48 - nome.gameHours) / SPEED + 0.1);
+      const locked = await post(p, `parcels/${slot.slot}/crop`, {
+        crop: crop.id,
+      });
+      expect(locked.status).toBe(422);
+      expect(locked.body.code).toBe('crops_locked');
+      const state = (await get(p)).body as NomeStateResponse;
+      expect(state.nome.nile).toMatchObject({
+        phase: 'peret',
+        cropsLocked: true,
+      });
+    });
+  });
+
+  describe('end of the reign', () => {
+    it('refuses every action once it is over, but still answers reads', async () => {
+      const p = await newPlayer('over');
+      wait(REIGN_REAL_HOURS);
+      const state = await get(p);
+      expect(state.status).toBe(200);
+      const { nome } = state.body as NomeStateResponse;
+      expect(nome.reign.over).toBe(true);
+      expect(nome.gameHours).toBe(nome.reign.endsAt);
+      expect(nome.reign.endsAt).toBe(4 * GAME_DATA.parameters.yearHours);
+      expect(nome.nile.nextFlood).toBeNull();
+
+      const actions = [
+        buildHouses(p, houseSlots[0]!.slot),
+        post(p, 'parcels/0/workers', { workers: 0 }),
+        post(p, `parcels/${swappableField().slot.slot}/crop`, {
+          crop: swappableField().crop.id,
+        }),
+        post(p, 'offerings', { god: affordableGod().id }),
+        post(p, 'cards/0/choice', { choice: 'a' }),
+      ];
+      for (const response of await Promise.all(actions)) {
+        expect(response.status).toBe(422);
+        expect(response.body.code).toBe('reign_over');
+      }
+      expect(await logTypes(p)).toEqual(['world.join']);
+
+      const acked = await post(p, 'report/ack');
+      expect(acked.status).toBe(201);
+      expect((await get(p)).status).toBe(200);
+    });
+
+    it('is not over before the last instant', async () => {
+      const p = await newPlayer('almost');
+      wait(REIGN_REAL_HOURS - JOINED_AFTER - 1);
+      const { nome } = (await get(p)).body as NomeStateResponse;
+      expect(nome.reign.over).toBe(false);
+      expect((await buildHouses(p, houseSlots[0]!.slot)).status).toBe(201);
+    });
+  });
+
+  describe('favour and legacy rows', () => {
+    it('stores the favour of the pharaoh on the nome', async () => {
+      const p = await newPlayer('favor');
+      await t.prisma.client.nome.update({
+        where: { id: p.nomeId },
+        data: { favor: 10 },
+      });
+      // The tribute is levied at hour 166 of the first Nile year.
+      wait((GAME_DATA.parameters.yearHours - JOINED_AFTER * SPEED) / SPEED);
+      const { nome, report } = (await get(p)).body as NomeStateResponse;
+      expect(report.royalFavor).not.toBe(0);
+      expect(nome.favor).not.toBe(10);
+      expect((await dbNome(p)).favor).toBeCloseTo(nome.favor, 6);
+    });
+
+    it.each([
+      ['an empty document', {}],
+      [
+        'a document without the later fields',
+        { houses: {}, cells: {}, peretOccupancy: {}, harvested: {} },
+      ],
+    ])(
+      'loads and advances a row whose rules state is %s',
+      async (_, legacy) => {
+        const p = await newPlayer('legacy');
+        await t.prisma.client.nome.update({
+          where: { id: p.nomeId },
+          data: { rulesState: legacy, favor: 0 },
+        });
+        wait(2);
+        const response = await get(p);
+        expect(response.status).toBe(200);
+        const { nome } = response.body as NomeStateResponse;
+        expect(nome.favor).toBe(0);
+        expect(nome.cards).toBeInstanceOf(Array);
+        expect(nome.gods.hapy.favor).toBeLessThan(
+          GAME_DATA.parameters.godFavorStart,
+        );
+        expect((await dbNome(p)).rulesState).toHaveProperty('gods');
+      },
+    );
+  });
+
   it('answers 404 when the player has no nome there', async () => {
     const p = await newPlayer('absent');
     const stranger = await login(t, 'stranger@example.org');
@@ -476,6 +850,9 @@ describe.skipIf(!hasDatabase)('nomes', () => {
         buildHouses(player, 0),
         post(player, 'parcels/0/workers', { workers: 0 }),
         post(player, 'report/ack'),
+        post(player, 'offerings', { god: 'hapy' }),
+        post(player, 'cards/0/choice', { choice: 'a' }),
+        post(player, 'parcels/0/crop', { crop: swappableField().crop.id }),
       ]);
       for (const response of responses) {
         expect(response.status).toBe(404);
