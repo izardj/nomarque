@@ -22,12 +22,6 @@
       "options": {
         "command": "tsc -p tools/tsconfig.json"
       }
-    },
-    "simulate-reign": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "tsx tools/reign-sim/src/main.ts"
-      }
     }
   }
 }

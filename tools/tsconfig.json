@@ -5,6 +5,6 @@
     "types": ["node"],
     "noPropertyAccessFromIndexSignature": true
   },
-  "include": ["import-data/src/**/*.ts", "reign-sim/src/**/*.ts"],
+  "include": ["import-data/src/**/*.ts"],
   "exclude": ["import-data/src/**/*.spec.ts"]
 }
