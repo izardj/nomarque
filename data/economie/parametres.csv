@@ -39,3 +39,7 @@ Poids d'une carte rare,0.2,Provisoire J2
 Seuil de faveur royale élevée,50,Provisoire J2
 Faveur royale par unité de tribut,0.2,Provisoire J2
 Faveur royale perdue par unité de tribut manquante,0.5,Provisoire J2
+Prestige du 1er d'un classement,10,Provisoire J2
+Prestige du 2e d'un classement,6,Provisoire J2
+Prestige du 3e d'un classement,3,Provisoire J2
+Prestige de participation à un classement,1,Provisoire J2

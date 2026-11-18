@@ -472,6 +472,10 @@ export function parseParameters(text: string): GameParameters {
     royalFavorHigh: value('royalFavorHigh'),
     royalFavorPerTribute: value('royalFavorPerTribute'),
     royalFavorPerMissingTribute: value('royalFavorPerMissingTribute'),
+    prestigeFirst: value('prestigeFirst'),
+    prestigeSecond: value('prestigeSecond'),
+    prestigeThird: value('prestigeThird'),
+    prestigeParticipation: value('prestigeParticipation'),
   };
 }
 

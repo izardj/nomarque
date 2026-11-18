@@ -184,6 +184,10 @@ export const PARAMETER_BY_LABEL = {
   'Faveur royale par unité de tribut': 'royalFavorPerTribute',
   'Faveur royale perdue par unité de tribut manquante':
     'royalFavorPerMissingTribute',
+  "Prestige du 1er d'un classement": 'prestigeFirst',
+  "Prestige du 2e d'un classement": 'prestigeSecond',
+  "Prestige du 3e d'un classement": 'prestigeThird',
+  'Prestige de participation à un classement': 'prestigeParticipation',
 } as const;
 
 /**

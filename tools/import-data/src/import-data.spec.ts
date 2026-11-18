@@ -212,6 +212,10 @@ describe('real data import', () => {
       royalFavorHigh: 50,
       royalFavorPerTribute: 0.2,
       royalFavorPerMissingTribute: 0.5,
+      prestigeFirst: 10,
+      prestigeSecond: 6,
+      prestigeThird: 3,
+      prestigeParticipation: 1,
     });
   });
 

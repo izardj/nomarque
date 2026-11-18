@@ -170,6 +170,10 @@ Poids d'une carte rare,0.2,
 Seuil de faveur royale élevée,50,
 Faveur royale par unité de tribut,0.2,
 Faveur royale perdue par unité de tribut manquante,0.5,
+Prestige du 1er d'un classement,10,
+Prestige du 2e d'un classement,6,
+Prestige du 3e d'un classement,3,
+Prestige de participation à un classement,1,
 `;
 
   it('maps parameter labels, including the nested flood multipliers', () => {

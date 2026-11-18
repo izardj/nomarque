@@ -208,6 +208,12 @@ export interface GameParameters {
   /** Pharaoh's favour per unit of tribute paid, lost per unit missing. */
   royalFavorPerTribute: number;
   royalFavorPerMissingTribute: number;
+  /** Prestige a dynasty earns per ranking of the reign, by rank. */
+  prestigeFirst: number;
+  prestigeSecond: number;
+  prestigeThird: number;
+  /** Prestige for any other rank. */
+  prestigeParticipation: number;
 }
 
 export type ExpeditionDestinationId = 'sinai' | 'byblos' | 'nubia' | 'punt';

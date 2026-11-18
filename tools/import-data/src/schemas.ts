@@ -133,6 +133,10 @@ const parametersSchema = z
     royalFavorHigh: positiveNumber,
     royalFavorPerTribute: positiveNumber,
     royalFavorPerMissingTribute: positiveNumber,
+    prestigeFirst: positiveNumber,
+    prestigeSecond: positiveNumber,
+    prestigeThird: positiveNumber,
+    prestigeParticipation: positiveNumber,
   })
   .superRefine((value, context) => {
     const issue = (message: string, path: string[]): void => {
