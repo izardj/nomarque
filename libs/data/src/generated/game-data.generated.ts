@@ -2,7 +2,7 @@
 import type { GameData } from '../lib/types';
 
 export const GAME_DATA: GameData = {
-  version: 'aca1ad8d985a',
+  version: '1ddc20a0e2ac',
   resources: [
     {
       id: 'wheat',
@@ -640,7 +640,7 @@ export const GAME_DATA: GameData = {
     startingDeben: 300,
     godFavorStart: 50,
     godFavorMax: 100,
-    godFavorDecayPerHour: 0.25,
+    godFavorDecayPerHour: 0.1,
     templeFavorPerHour: 0.1,
     godFavorLow: 30,
     godFavorVeryLow: 15,

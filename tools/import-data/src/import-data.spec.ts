@@ -194,7 +194,7 @@ describe('real data import', () => {
     expect(data.parameters).toMatchObject({
       godFavorStart: 50,
       godFavorMax: 100,
-      godFavorDecayPerHour: 0.25,
+      godFavorDecayPerHour: 0.1,
       templeFavorPerHour: 0.1,
       godFavorLow: 30,
       godFavorVeryLow: 15,

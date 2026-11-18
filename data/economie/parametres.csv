@@ -21,7 +21,7 @@ Deben de départ,300,Provisoire J1
 Zones des îlots de maisons,"Ville, Terre noire, Désert",Provisoire J1 : pas sur le fleuve
 Faveur des dieux au départ,50,Provisoire J2
 Faveur des dieux maximale,100,Provisoire J2
-Baisse de faveur des dieux (par h de jeu),0.25,Provisoire J2 : 42 points par année
+Baisse de faveur des dieux (par h de jeu),0.1,"Provisoire J2 : 17 points par année, compensée par un temple actif"
 Faveur d'un temple actif (par h de jeu et par dieu),0.1,Provisoire J2 : proportionnelle à l'occupation
 Seuil de faveur basse,30,Provisoire J2
 Seuil de faveur très basse,15,Provisoire J2
