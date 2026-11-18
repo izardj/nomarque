@@ -19,3 +19,23 @@ Coût d'un îlot de maisons (deben),30,Provisoire J1
 Durée de construction d'un îlot (h de jeu),4,Provisoire J1
 Deben de départ,300,Provisoire J1
 Zones des îlots de maisons,"Ville, Terre noire, Désert",Provisoire J1 : pas sur le fleuve
+Faveur des dieux au départ,50,Provisoire J2
+Faveur des dieux maximale,100,Provisoire J2
+Baisse de faveur des dieux (par h de jeu),0.25,Provisoire J2 : 42 points par année
+Faveur d'un temple actif (par h de jeu et par dieu),0.1,Provisoire J2 : proportionnelle à l'occupation
+Seuil de faveur basse,30,Provisoire J2
+Seuil de faveur très basse,15,Provisoire J2
+Seuil de bénédiction,70,Provisoire J2
+Intervalle entre offrandes (h de jeu),24,Provisoire J2 : une offrande par jour
+Hâpy : multiplicateur de crue basse bénie,0.8,Provisoire J2 : au lieu de 0.6
+Osiris : effet sur la récolte,0.1,Provisoire J2 : +10 % béni / -10 % négligé
+Bastet : heures avant montée de niveau (béni),18,Provisoire J2 : au lieu de 24
+Intervalle de tirage des cartes (h de jeu),8,Provisoire J2 : 3 tirages par jour
+Probabilité d'une carte par tirage,0.8,Provisoire J2 : 2 à 3 cartes par jour
+Cartes en attente au maximum,3,Provisoire J2
+Délai avant le choix par défaut (h de jeu),24,Provisoire J2 : délai de grâce du GDD
+Poids d'une carte conditionnelle,3,Provisoire J2 : une carte aléatoire pèse 1
+Poids d'une carte rare,0.2,Provisoire J2
+Seuil de faveur royale élevée,50,Provisoire J2
+Faveur royale par unité de tribut,0.2,Provisoire J2
+Faveur royale perdue par unité de tribut manquante,0.5,Provisoire J2

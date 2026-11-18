@@ -163,4 +163,51 @@ export const PARAMETER_BY_LABEL = {
   'Deben de départ': 'startingDeben',
   /** Comma-separated zone labels, parsed with ZONES_BY_LABEL. */
   'Zones des îlots de maisons': 'houseZones',
+  'Faveur des dieux au départ': 'godFavorStart',
+  'Faveur des dieux maximale': 'godFavorMax',
+  'Baisse de faveur des dieux (par h de jeu)': 'godFavorDecayPerHour',
+  "Faveur d'un temple actif (par h de jeu et par dieu)": 'templeFavorPerHour',
+  'Seuil de faveur basse': 'godFavorLow',
+  'Seuil de faveur très basse': 'godFavorVeryLow',
+  'Seuil de bénédiction': 'godFavorBlessing',
+  'Intervalle entre offrandes (h de jeu)': 'offeringIntervalHours',
+  'Hâpy : multiplicateur de crue basse bénie': 'hapyLowFloodMultiplier',
+  'Osiris : effet sur la récolte': 'osirisHarvestShare',
+  'Bastet : heures avant montée de niveau (béni)': 'bastetUpgradeHours',
+  'Intervalle de tirage des cartes (h de jeu)': 'cardDrawIntervalHours',
+  "Probabilité d'une carte par tirage": 'cardDrawChance',
+  'Cartes en attente au maximum': 'cardMaxPending',
+  'Délai avant le choix par défaut (h de jeu)': 'cardGraceHours',
+  "Poids d'une carte conditionnelle": 'cardConditionalWeight',
+  "Poids d'une carte rare": 'cardRareWeight',
+  'Seuil de faveur royale élevée': 'royalFavorHigh',
+  'Faveur royale par unité de tribut': 'royalFavorPerTribute',
+  'Faveur royale perdue par unité de tribut manquante':
+    'royalFavorPerMissingTribute',
 } as const;
+
+/**
+ * Worker classes as card effects name them ("paysans -10 pendant 48 h"),
+ * lower case and plural.
+ */
+export const CARD_WORKER_CLASS_BY_LABEL: Record<string, WorkerClass> = {
+  paysans: 'peasant',
+  artisans: 'artisan',
+  scribes: 'scribe',
+  prêtres: 'priest',
+};
+
+/**
+ * Buildings as card texts name them, in effects ("carrière inactive 24 h") and
+ * in triggers ("Carrière construite"). Matched case-insensitively.
+ */
+export const CARD_BUILDING_BY_LABEL: Record<string, BuildingId> = {
+  carrière: 'limestone_quarry',
+  port: 'port',
+  pêcherie: 'fishery',
+  grenier: 'granary',
+  potier: 'potter',
+  temple: 'temple',
+  école: 'school',
+  "champ d'orge": 'farm_barley',
+};
